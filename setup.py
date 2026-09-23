@@ -20,15 +20,16 @@ the ``alamodekit`` command, which is equivalent to running
 
 Note: the No.X/<submenu>/<script>.py files are NOT installed as importable
 Python modules (their names contain dots and they are meant to be executed
-by the menu, not imported). They are included as package data so the menu
-launcher can find them next to the package.
+by the menu, not imported). They are declared as package data so that source
+distributions and editable installs carry the complete script tree.
 
-Because the launcher resolves every subprogram as
-``<alamodekit.base_path>/No.X/<submenu>/<script>``, the recommended install is
-the **editable** one (``pip install -e .``) so that the ``No.X`` script tree
-stays alongside the installed module. After a plain ``pip install .``, point
-``alamodekit.base_path`` in ``config/settings.yaml`` at the extracted source
-tree instead.
+Because the toolkit declares no Python package of its own (there is no
+``packages=`` argument), a plain ``pip install .`` copies only the five
+top-level modules: neither the ``No.X`` script tree nor
+``config/settings.yaml`` is installed, so the launcher would have nothing to
+resolve. The ``alamodekit`` console script therefore requires an **editable**
+install (``pip install -e .``), which keeps the script tree in place;
+otherwise run ``python alamodekit.py`` from the source tree.
 """
 from __future__ import annotations
 
