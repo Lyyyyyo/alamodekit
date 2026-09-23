@@ -1,0 +1,12 @@
+# Runtime dependencies for ALAMODEkit.
+# (PyYAML is optional: the config loader ships a built-in fallback parser,
+#  but installing PyYAML is recommended for robust YAML parsing.)
+numpy>=1.20
+matplotlib>=3.3
+pandas>=1.2
+PyYAML>=5.4
+
+# Optional dependencies (only needed by specific No.7 tools):
+#   spglib>=2.0   -> No.7/704 ase_bridge --spacegroup (also auto-used when present)
+#   ase>=3.22     -> No.7/704 ase_bridge primitive/conventional/neighbours/reduced
+# Install with:  pip install spglib ase

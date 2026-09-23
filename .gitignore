@@ -1,0 +1,71 @@
+# ----------------------------------------------------------------------------
+# .gitignore for ALAMODEkit
+# ----------------------------------------------------------------------------
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+.eggs/
+build/
+dist/
+develop-eggs/
+sdist/
+wheels/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# ---- Virtual environments ----
+.env/
+.venv/
+venv/
+env/
+ENV/
+
+# ---- Editors / IDEs ----
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ---- ALAMODE calculation outputs (per-user, do not commit) ----
+# Generated input files
+*.in
+# ALAMODE result / output files
+*.bands
+*.dos
+*.gruneisen
+*.phvel
+*.result
+*.cvscore
+*.xml
+*.fcs
+*.scph*
+*.rebands
+*.band.apr
+# Toolkit-generated intermediate data tables
+*_projection*.txt
+*_vel_projection.txt
+*_merged_output.txt
+*_gruneisen_combined.txt
+*th_order_ifc.txt
+# Generated figures
+*.png
+*.pdf
+*.svg
+# ShengBTE / dfc2 outputs
+scpb_*K.xml
+FORCE_CONSTANTS_2ND*
+CONTROL
+BTE.*
+*.csv
+
+# ---- Example / scratch ----
+scratch/
+tmp/

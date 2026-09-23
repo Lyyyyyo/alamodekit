@@ -1,0 +1,136 @@
+# ============================================================================
+#  ALAMODEkit Configuration File  (settings.yaml)
+# ----------------------------------------------------------------------------
+#  This is the SINGLE source of truth for user-adjustable parameters.
+#  Every subprogram in the toolkit reads from this file at runtime, so you
+#  only need to edit values here -- no need to touch the source code.
+#
+#  How the file is located at runtime (see alamodekit_config.py):
+#    1. The path stored in the ALAMODEKIT_CONFIG environment variable, or
+#    2. ./config/settings.yaml in the current working directory, or
+#    3. The bundled copy shipped with the toolkit (this file).
+# ============================================================================
+
+# ----------------------------------------------------------------------------
+# 1. ALAMODE installation settings
+#    Used by the analyze_phonons wrapper (No.2/202) to locate the compiled
+#    ALAMODE binaries (alm, anphon, analyze_phonons, ...).
+# ----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
+# 0. ALAMODEkit installation path
+#    Root folder of the toolkit (where alamodekit.py lives). The launcher
+#    resolves every subprogram as <base_path>/No.X/<submenu>/<script>.
+#    Leave empty to use the folder that contains this settings.yaml file.
+# ----------------------------------------------------------------------------
+alamodekit:
+  base_path: ""
+
+alamode:
+  # Absolute path to the ALAMODE build directory that contains the executables.
+  # Compile ALAMODE yourself; the toolkit only invokes the binaries (it does
+  # NOT bundle or import the ALAMODE source code).
+  # Examples:
+  #   Linux / macOS : /home/username/alamode/alamode/build
+  bin_dir: /home/username/alamode/alamode/build
+
+  # Binary names. Override only if you renamed the executables.
+  binaries:
+    alm: alm
+    anphon: anphon
+    analyze_phonons: analyze_phonons
+    dfc2: dfc2
+
+# ----------------------------------------------------------------------------
+# 2. Global plotting settings
+#    Applied to EVERY figure produced by the toolkit (No.2 analysis scripts).
+# ----------------------------------------------------------------------------
+plotting:
+  # Figure resolution in dots per inch.
+  #   150 : quick on-screen preview
+  #   300 : standard publication
+  #   600 : high-quality publication (default)
+  dpi: 600
+
+  # Default figure size [width, height] in inches.
+  figsize: [8, 6]
+
+  # Output file formats saved for every figure.
+  save_formats: [png, pdf]
+
+  # ---- Font settings ----
+  font:
+    family: Arial
+    size: 12
+    label_size: 14      # axis label font size
+    tick_size: 12       # tick label font size
+    title_size: 16      # title font size
+
+  # ---- Line settings ----
+  lines:
+    linewidth: 1.2      # general line width
+    band_linewidth: 1.5 # line width used for phonon band curves
+    color: "#1f77b4"    # default single-curve color
+    alpha: 1.0          # line opacity (0-1)
+    antialiased: true
+
+  # ---- Axis settings ----
+  axes:
+    linewidth: 1.2
+    tick_major_width: 1.2
+    tick_minor_width: 1.0
+    tick_direction: in  # "in", "out", or "inout"
+
+  # ---- Color schemes ----
+  colors:
+    # Primary single-curve color.
+    primary: "#1f77b4"
+    secondary: "#ff7f0e"
+    # High-symmetry-point vertical guide lines.
+    high_sym_line: gray
+    high_sym_linewidth: 0.8
+    high_sym_linestyle: "--"
+    high_sym_alpha: 0.6
+    # High-contrast palette for multi-element / multi-curve plots.
+    palette:
+      - "#e41a1c"  # red
+      - "#377eb8"  # blue
+      - "#4daf4a"  # green
+      - "#984ea3"  # purple
+      - "#ff7f00"  # orange
+      - "#a65628"  # brown
+      - "#f781bf"  # pink
+      - "#999999"  # grey
+
+  # ---- Colormaps for projected / scalar fields ----
+  #   "custom_yellow_green_blue" : 0 = yellow, mid = green, max = dark blue
+  #                                (used for group-velocity projection)
+  #   "custom_blue_white_red"    : dark blue -> white -> dark red
+  #                                (used for Gruneisen parameter)
+  #   Any standard matplotlib name (viridis, plasma, RdBu_r, ...) is valid.
+  colormaps:
+    velocity: custom_yellow_green_blue
+    gruneisen: custom_blue_white_red
+    temperature: RdBu_r
+    sequential: viridis
+    diverging: RdBu_r
+
+  # ---- Colorbar settings ----
+  colorbar:
+    enabled: true
+    orientation: vertical
+    label_size: 12
+    tick_size: 10
+    n_ticks: 8
+
+  # ---- Grid settings ----
+  grid:
+    enabled: false
+    alpha: 0.3
+    linestyle: "--"
+
+  # ---- Physical units shown on the axes ----
+  units:
+    frequency: "cm$^{-1}$"   # "cm$^{-1}$" or "THz"
+    length: "nm"
+    conductivity: "W/mK"
+    lifetime: "ps"

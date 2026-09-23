@@ -1,0 +1,61 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+esti_har.py
+===========
+
+Generate the ALM input file for *fitting* the harmonic (2nd-order) force
+constants (101-02). Read ``SPOSCAR`` and emit ``alm2.in`` in
+``MODE = optimize`` reading the displacement/force data from ``DFSET_harmonic``.
+
+The user needs ``SPOSCAR`` plus a displacement-force dataset named
+``DFSET_harmonic``. All defaults are chosen to make the generated input
+immediately runnable; edit PREFIX / DFSET if your files use other names.
+
+Outputs
+-------
+    alm2.in   ALM input file (PREFIX = Cu by default)
+"""
+from __future__ import annotations
+
+import os
+import sys
+
+import alamodekit_io
+alamodekit_io.ensure_package_root()
+
+from alamode_input import (parse_poscar, write_namelist,
+                           cell_block_lines, position_block_lines)
+
+
+def main(poscar: str = "SPOSCAR", output: str = "alm2.in",
+         prefix: str = "Cu", dfset: str = "DFSET_harmonic") -> None:
+    """Build the harmonic-fit (optimize) ALM input file."""
+    if not os.path.isfile(poscar):
+        print(f"Error: {poscar} not found in the current directory.")
+        sys.exit(1)
+
+    info = parse_poscar(poscar)
+    nat = sum(info['atom_counts'])
+    nkd = len(info['elements'])
+
+    blocks = [
+        ('general', [
+            f"\tPREFIX = {prefix}",
+            "\tMODE = optimize",
+            f"\tNAT = {nat}; NKD = {nkd}",
+            "\tKD = " + " ".join(info['elements']),
+        ]),
+        ('optimize', [f"\tDFSET = {dfset}"]),
+        ('interaction', ["\tNORDER = 1"]),
+        ('cell', cell_block_lines(info['cell'])),
+        ('cutoff', ["\t*-* None"]),
+        ('position', position_block_lines(info['positions'])),
+    ]
+    write_namelist(output, blocks)
+    print(f"The input file '{output}' has been generated. "
+          "Please modify the prefix and cutoff value if needed.")
+
+
+if __name__ == '__main__':
+    main()

@@ -1,0 +1,58 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "alamodekit"
+version = "1.0.0"
+description = "Advanced ALAMODE Toolkit - input generation, post-processing and plotting for ALAMODE."
+readme = "README.md"
+requires-python = ">=3.8"
+license = { text = "MIT" }
+authors = [
+    { name = "ALAMODEkit contributors" }
+]
+keywords = ["alamode", "phonon", "thermal-conductivity", "shengbte", "scph", "anharmonic"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering :: Physics",
+    "Intended Audience :: Science/Research",
+]
+dependencies = [
+    "numpy>=1.20",
+    "matplotlib>=3.3",
+    "pandas>=1.2",
+    "PyYAML>=5.4",
+]
+
+[project.scripts]
+alamodekit = "alamodekit:main"
+
+[tool.setuptools]
+py-modules = [
+    "alamodekit",
+    "alamodekit_config",
+    "alamodekit_io",
+    "alamode_input",
+    "plot_style",
+]
+
+[tool.setuptools.package-data]
+"*" = [
+    "config/settings.yaml",
+    "No.1/101/*.py",
+    "No.1/102/*.py",
+    "No.2/201/*.py",
+    "No.2/202/*.py",
+    "No.2/203/*.py",
+    "No.2/204/*.py",
+    "No.2/205/*.py",
+    "No.3/301/*.py",
+    "No.3/302/*.py",
+    "No.4/401/*.py",
+    "No.4/402/*.py",
+    "No.5/501/*.py",
+    "No.5/502/*.py",
+]
