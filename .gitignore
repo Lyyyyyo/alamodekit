@@ -35,8 +35,10 @@ ENV/
 Thumbs.db
 
 # ---- ALAMODE calculation outputs (per-user, do not commit) ----
-# Generated input files
+# Generated input files. MANIFEST.in also matches *.in but is packaging
+# metadata and must be tracked, hence the negation below.
 *.in
+!MANIFEST.in
 # ALAMODE result / output files
 *.bands
 *.dos
