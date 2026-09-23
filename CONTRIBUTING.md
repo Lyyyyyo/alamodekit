@@ -39,9 +39,35 @@ You can now edit the toolkit and immediately run `alamodekit` from anywhere.
    with a unique `id`, a clear `desc`, the `script` filename, and the list of
    `required_files` the user must have in the working directory.
 3. If it plots, import from `plot_style` and never hard-code styling.
-4. Update `README.md` (menu layout table) and `setup.py` / `pyproject.toml`
-   `package-data` globs if you created a new folder.
+4. Update `README.md` (menu layout table). The `No.*/*/*.py` wildcards in
+   `setup.py`, `pyproject.toml` and `MANIFEST.in` already match any
+   `No.X/<submenu>/` folder, so an ordinary new subprogram needs **no**
+   manifest edit at all.
 5. Run `python -m py_compile <your_script>.py` to confirm it parses.
+6. Confirm the script actually ships, by building the wheel and looking
+   inside it: `pip wheel . --no-deps -w /tmp/whl` then
+   `python -c "import glob,zipfile;print([n for n in zipfile.ZipFile(glob.glob('/tmp/whl/*.whl')[0]).namelist() if 'No.8' in n])"`.
+   CI runs the same check automatically (see "Guard the wheel payload").
+
+## Packaging invariants
+
+These three facts have bitten this toolkit before. Please do not undo them.
+
+- **`setup.py` must keep `packages=[""]` and `package_dir={"": "."}`.** The
+  toolkit is flat — there is no importable top-level package directory — so
+  the project root is declared as the package. `package_data` is keyed by
+  package, so without this declaration setuptools has nothing to attach the
+  `No.X` tree to: it drops every subprogram from the wheel **without any
+  error**, and `pip install .` then installs a toolkit that resolves nothing.
+  `pip install -e .` masks the problem, because editable installs read the
+  source tree directly.
+- **`[tool.setuptools.package-data]` in `pyproject.toml` overrides
+  `setup.py`'s `package_data`.** Editing only `setup.py` therefore has no
+  effect on the wheel. Both lists are kept identical on purpose; never let
+  them drift apart.
+- **The root package cannot be declared in `pyproject.toml`.** setuptools
+  rejects the empty package name `""` during schema validation, which is why
+  `packages` / `package_dir` live in `setup.py` and must stay there.
 
 ## Submitting changes
 

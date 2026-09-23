@@ -4,10 +4,6 @@ include CHANGELOG.md
 include requirements.txt
 include pyproject.toml
 include config/settings.yaml
-recursive-include No.1 *.py
-recursive-include No.2 *.py
-recursive-include No.3 *.py
-recursive-include No.4 *.py
-recursive-include No.5 *.py
-recursive-include No.6 *.py
-recursive-include No.7 *.py
+# Covers No.<section>/<submenu>/<script>.py for every section, so a new No.8
+# needs no edit here.
+recursive-include No.* *.py

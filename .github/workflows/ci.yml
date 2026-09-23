@@ -48,6 +48,29 @@ jobs:
         run: |
           python -c "import alamodekit; print('registered functions:', len(alamodekit.SCRIPT_PATHS)); assert all(__import__('os').path.isfile(v['path']) for v in alamodekit.SCRIPT_PATHS.values())"
 
+      # Regression guard. The wheel used to be built WITHOUT the No.X tree:
+      # package_data was declared but no package was, so setuptools silently
+      # dropped every subprogram and `pip install .` produced a toolkit that
+      # resolved nothing. Nothing in CI noticed, because everything else runs
+      # from the source tree. This step builds the real wheel and asserts the
+      # payload is complete.
+      - name: Guard the wheel payload
+        run: |
+          pip wheel . --no-deps --wheel-dir /tmp/whl
+          python - <<'PY'
+          import glob, os, sys, zipfile
+          whl = glob.glob('/tmp/whl/*.whl')
+          assert len(whl) == 1, f'expected exactly one wheel, got {whl}'
+          names = zipfile.ZipFile(whl[0]).namelist()
+          on_disk = {os.path.relpath(p).replace(os.sep, '/') for p in glob.glob('No.*/*/*.py')}
+          got = {n for n in names if n.startswith('No.') and n.endswith('.py')}
+          missing = sorted(on_disk - got)
+          assert not missing, f'wheel is missing {len(missing)} subprogram(s): {missing[:5]}'
+          assert 'config/settings.yaml' in names, 'wheel is missing config/settings.yaml'
+          assert 'alamodekit.py' in names and 'plot_style.py' in names, 'wheel is missing a top-level module'
+          print(f'wheel payload OK: {len(got)} subprograms + config/settings.yaml')
+          PY
+
       - name: Smoke-test the pure-Python helpers (No.6)
         run: |
           # input_validator: build a tiny namelist file and check it parses.

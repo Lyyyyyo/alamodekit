@@ -39,31 +39,25 @@ py-modules = [
     "plot_style",
 ]
 
+# NOTE -- why `packages` is not declared here
+# -------------------------------------------
+# The toolkit is flat: there is no importable top-level package directory, so
+# the project root itself is declared as the package. The empty package name
+# "" cannot be written in `[tool.setuptools]` (setuptools rejects it during
+# schema validation), which is why `packages = [""]` and
+# `package_dir = {"": "."}` live in setup.py instead. Do not "tidy" them away:
+# without them `package_data` below has no package to attach to and the whole
+# No.X script tree is silently dropped from the wheel.
+#
+# NOTE -- the list below overrides setup.py
+# -----------------------------------------
+# When both files declare package data, this `[tool.setuptools.package-data]`
+# table wins and setup.py's `package_data` is ignored. The two lists are
+# therefore kept identical, so the result does not depend on which one
+# setuptools honours.
 [tool.setuptools.package-data]
 "*" = [
     "config/settings.yaml",
-    "No.1/101/*.py",
-    "No.1/102/*.py",
-    "No.2/201/*.py",
-    "No.2/202/*.py",
-    "No.2/203/*.py",
-    "No.2/204/*.py",
-    "No.2/205/*.py",
-    "No.3/301/*.py",
-    "No.3/302/*.py",
-    "No.4/401/*.py",
-    "No.4/402/*.py",
-    "No.5/501/*.py",
-    "No.5/502/*.py",
-    "No.6/601/*.py",
-    "No.6/602/*.py",
-    "No.6/603/*.py",
-    "No.6/604/*.py",
-    "No.6/605/*.py",
-    "No.7/701/*.py",
-    "No.7/702/*.py",
-    "No.7/703/*.py",
-    "No.7/704/*.py",
-    "No.7/705/*.py",
-    "No.7/706/*.py",
+    "No.*/*/*.py",
 ]
+

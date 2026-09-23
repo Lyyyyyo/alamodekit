@@ -4,6 +4,30 @@ All notable changes to ALAMODEkit are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+- **The wheel now actually carries the toolkit.** `package_data` was declared
+  but no package was, so setuptools silently dropped the whole `No.X` script
+  tree *and* `config/settings.yaml` from the wheel: `pip install .` produced an
+  installation in which none of the 43 menu entries could be resolved, while
+  `pip install -e .` masked the problem by reading the source tree directly.
+  `setup.py` now declares `packages=[""]` together with
+  `package_dir={"": "."}`; the payload went from 5 files to the complete tree.
+- `MANIFEST.in` had never been committed: the `.gitignore` rule `*.in`, meant
+  for generated ALAMODE inputs (`alm.in`, `phband.in`, ...), also matched it.
+- The packaging lists stopped at `No.5`, so 19 subprograms were missing from
+  both the sdist and wheel manifests.
+
+### Changed
+- The three packaging lists (`setup.py`, `pyproject.toml`, `MANIFEST.in`) use
+  the `No.*/*/*.py` wildcard, so a new `No.X` section needs no manifest edit.
+  They are kept identical on purpose: `[tool.setuptools.package-data]` in
+  `pyproject.toml` overrides `setup.py`'s `package_data`.
+- CI builds a wheel and asserts its payload contains every subprogram plus
+  `config/settings.yaml` — the regression this release fixes went unnoticed
+  precisely because every other CI step runs from the source tree.
+
 ## [1.5.0] — Linux: phonon vibration visualisation (No.7/706) + source audit
 
 ### Source audit
