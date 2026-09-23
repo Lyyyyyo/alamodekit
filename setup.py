@@ -22,6 +22,13 @@ Note: the No.X/<submenu>/<script>.py files are NOT installed as importable
 Python modules (their names contain dots and they are meant to be executed
 by the menu, not imported). They are included as package data so the menu
 launcher can find them next to the package.
+
+Because the launcher resolves every subprogram as
+``<alamodekit.base_path>/No.X/<submenu>/<script>``, the recommended install is
+the **editable** one (``pip install -e .``) so that the ``No.X`` script tree
+stays alongside the installed module. After a plain ``pip install .``, point
+``alamodekit.base_path`` in ``config/settings.yaml`` at the extracted source
+tree instead.
 """
 from __future__ import annotations
 
@@ -44,7 +51,7 @@ def _read_text(name: str) -> str:
 
 setup(
     name="alamodekit",
-    version="1.0.0",
+    version="1.5.0",
     description="Advanced ALAMODE Toolkit - input generation, post-processing and plotting for ALAMODE.",
     long_description=_read_text("README.md"),
     long_description_content_type="text/markdown",
@@ -64,11 +71,15 @@ setup(
             "No.1/101/*.py", "No.1/102/*.py",
             "No.2/201/*.py", "No.2/202/*.py", "No.2/203/*.py",
             "No.2/204/*.py", "No.2/205/*.py",
-            "No.3/301/*.py", "No.3/302/*.py",
-            "No.4/401/*.py", "No.4/402/*.py",
-            "No.5/501/*.py", "No.5/502/*.py",
-        ],
-    },
+        "No.3/301/*.py", "No.3/302/*.py",
+        "No.4/401/*.py", "No.4/402/*.py",
+        "No.5/501/*.py", "No.5/502/*.py",
+        "No.6/601/*.py", "No.6/602/*.py", "No.6/603/*.py",
+        "No.6/604/*.py", "No.6/605/*.py",
+        "No.7/701/*.py", "No.7/702/*.py", "No.7/703/*.py",
+        "No.7/704/*.py", "No.7/705/*.py", "No.7/706/*.py",
+    ],
+},
     include_package_data=True,
     install_requires=[
         "numpy>=1.20",

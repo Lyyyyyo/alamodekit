@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "alamodekit"
-version = "1.0.0"
+version = "1.5.0"
 description = "Advanced ALAMODE Toolkit - input generation, post-processing and plotting for ALAMODE."
 readme = "README.md"
 requires-python = ">=3.8"
@@ -55,4 +55,15 @@ py-modules = [
     "No.4/402/*.py",
     "No.5/501/*.py",
     "No.5/502/*.py",
+    "No.6/601/*.py",
+    "No.6/602/*.py",
+    "No.6/603/*.py",
+    "No.6/604/*.py",
+    "No.6/605/*.py",
+    "No.7/701/*.py",
+    "No.7/702/*.py",
+    "No.7/703/*.py",
+    "No.7/704/*.py",
+    "No.7/705/*.py",
+    "No.7/706/*.py",
 ]

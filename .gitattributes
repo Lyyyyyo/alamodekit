@@ -1,0 +1,5 @@
+# This toolkit is developed on Windows but runs on Linux compute servers.
+# Force LF in the working tree as well as in the repository, so a Windows
+# checkout cannot introduce stray CR characters that would break shebangs
+# and ALAMODE input files.
+* text=auto eol=lf

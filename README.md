@@ -36,7 +36,10 @@ dependency) is available for desktop post-processing analysis.
   Born-charge extraction (VASP/QE → ALAMODE & Phonopy BORN), structure
   export to XSF/CIF/VESTA, an ASE/spglib bridge, spectral-kappa plotting,
   and phonon vibration animations (.axsf) for VESTA.
-- **PyYAML optional**: the config loader ships a built-in fallback parser.
+- **Resilient config loading**: PyYAML is the normal path (it is listed in
+  `setup.py` / `pyproject.toml` / `requirements.txt`), and the config loader
+  additionally ships a built-in pure-Python fallback parser so the toolkit
+  still starts where PyYAML cannot be installed.
 
 ---
 
@@ -44,7 +47,7 @@ dependency) is available for desktop post-processing analysis.
 
 ```
 alamodekit_linux/
-├── alamodekit.py            # interactive menu launcher (37 functions)
+├── alamodekit.py            # interactive menu launcher (43 functions)
 ├── alamodekit_config.py     # config loader (settings.yaml → dict)
 ├── alamodekit_io.py          # shared parsing helpers (bands/DOS/labels)
 ├── alamode_input.py          # shared ALM/ANPHON namelist helpers

@@ -1,6 +1,9 @@
 # Runtime dependencies for ALAMODEkit.
-# (PyYAML is optional: the config loader ships a built-in fallback parser,
-#  but installing PyYAML is recommended for robust YAML parsing.)
+# PyYAML is a normal runtime dependency (it is also listed in setup.py /
+# pyproject.toml). The config loader additionally ships a built-in
+# pure-Python fallback parser, so the toolkit still starts on systems where
+# PyYAML cannot be installed -- that is a safety net, not a license to omit
+# it from requirements.
 numpy>=1.20
 matplotlib>=3.3
 pandas>=1.2

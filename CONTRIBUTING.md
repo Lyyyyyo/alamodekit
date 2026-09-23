@@ -9,7 +9,7 @@ maintain.
 
 ```bash
 git clone https://github.com/<your-fork>/ALAMODEkit.git
-cd ALAMODEkit/alamodekit_v2
+cd ALAMODEkit/alamodekit_linux
 pip install -e .                 # editable install
 pip install -r requirements.txt
 ```
