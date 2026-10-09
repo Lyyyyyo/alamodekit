@@ -31,7 +31,7 @@
   4. Always run the health check afterwards:
         python3 check_deploy.py
      The deployment is finished only when it reports 0 failures
-     (the report is printed in Chinese: "0 项失败" means "0 failures").
+     (the report prints "Result: 0 failed, N warnings").
 
   Short on time? Just work through section [2]; it takes about five minutes.
 
@@ -156,10 +156,9 @@
 
   A healthy deployment ends like this:
       ========================================================================
-        结果：0 项失败，N 项警告
+        Result: 0 failed, N warnings
       ========================================================================
-  (the line is Chinese: "0 项失败" = 0 failures, "N 项警告" = N warnings.
-  A missing MPI, the system interpreter, etc. are warnings only and do not
+  (A missing MPI, the system interpreter, etc. are warnings only and do not
   affect serial use.)
 
   Other useful arguments:

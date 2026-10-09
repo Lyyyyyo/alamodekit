@@ -226,15 +226,15 @@ A healthy deployment looks like this (the `alm/anphon/...` lines appear once
 
 ```
 1. Python interpreter          [ OK ]  Python >= 3.8
-2. Toolkit root and script tree[ OK ]  No.X 章节齐全   7 个
-                               [ OK ]  脚本文件   44 个 .py
-3. Launcher registry vs. disk  [ OK ]  菜单注册的 43 个功能全部能定位到文件
-4. settings.yaml resolution    [ OK ]  配置加载成功
-5. ALAMODE binaries            [ OK ]  alm 可执行
+2. Toolkit root and script tree[ OK ]  No.X sections complete   7 found
+                               [ OK ]  script files   44 .py files
+3. Launcher registry vs. disk  [ OK ]  all 43 registered menu functions resolve to files
+4. settings.yaml resolution    [ OK ]  config loaded
+5. ALAMODE binaries            [ OK ]  alm is executable
 6. Python dependencies         [ OK ]  numpy 2.5.3   matplotlib 3.11.2 ...
-7. matplotlib headless test    [ OK ]  Agg 后端可正常出图
-8. MPI                         [ OK ]  找到 MPI 启动器
-9. Working directory           [ OK ]  可写
+7. matplotlib headless test    [ OK ]  Agg backend can render
+8. MPI                         [ OK ]  MPI launcher found
+9. Working directory           [ OK ]  writable
 ```
 
 Then a 30-second functional smoke test — create `SPOSCAR` in an empty

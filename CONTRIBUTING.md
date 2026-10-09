@@ -1,6 +1,6 @@
 # Contributing to ALAMODEkit
 
-First of all, thank you for taking the time to contribute! 🎉
+First of all, thank you for taking the time to contribute!
 
 The following is a short guide to keep the toolkit consistent and easy to
 maintain.

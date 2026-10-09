@@ -115,10 +115,10 @@
       # 例如输出 /home/heihei123/alamode/build/alm
       # 那么 bin_dir 就填 /home/heihei123/alamode/build
 
-  ⚠ 忘了改的症状：选 No.5 跑求解器时报 "No such file or directory:
+  注意：忘了改的症状：选 No.5 跑求解器时报 "No such file or directory:
     /home/username/alamode/..."。
 
-  ⚠ 同一文件里的 alamodekit.base_path 请【保持空字符串别动】，三种安装方式
+  注意：同一文件里的 alamodekit.base_path 请【保持空字符串别动】，三种安装方式
     下它都会自动回退到正确目录。
 
   只用 No.1（生成输入）、No.2（分析绘图，202 除外）、No.6、No.7 这些不调用
@@ -149,7 +149,7 @@
 --------------------------------------------------------------------------------
   第 5 步  启动
 --------------------------------------------------------------------------------
-  ⚠ 请先 cd 到你的算例目录再启动。生成的文件（alm.in、*.bands 等）都落在
+  注意：请先 cd 到你的算例目录再启动。生成的文件（alm.in、*.bands 等）都落在
     【当前工作目录】，不是落在工具包目录。
 
       cd ~/work/Si
@@ -227,7 +227,7 @@ grep -q '\.local/bin' ~/.bashrc || \
       python3 -m venv ~/.venvs/alamodekit        # 或 conda create ...
       source ~/.venvs/alamodekit/bin/activate
 
-  ⚠ 重新登录 / 新开终端后，虚拟环境【不会】自动激活，每次使用前要重新激活：
+  注意：重新登录 / 新开终端后，虚拟环境【不会】自动激活，每次使用前要重新激活：
       conda activate alamodekit                   # conda 用户
       source ~/.venvs/alamodekit/bin/activate     # venv 用户
     激活成功的标志：命令行最前面出现带括号的环境名 (alamodekit)。
@@ -294,7 +294,7 @@ grep -q '\.local/bin' ~/.bashrc || \
     3. 当前工作目录下的 ./settings.yaml
     4. 随包携带的那一份
 
-  ⚠ 是【整体替换】，不是逐项合并。自己放一份就意味着随包那份完全不生效，
+  注意：是【整体替换】，不是逐项合并。自己放一份就意味着随包那份完全不生效，
     所以一定要【从随包那份复制出来再改】，不要只写两行。
 
   多人共用一份只读安装时（共享服务器 / 集群）标准做法：

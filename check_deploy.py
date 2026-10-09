@@ -117,9 +117,10 @@ def main():
     in_venv = (hasattr(sys, "real_prefix")
                or sys.prefix != getattr(sys, "base_prefix", sys.prefix))
     if in_venv:
-        note("解释器类型", "独立环境 / venv / conda")
+        note("interpreter type", "virtual env / venv / conda")
     else:
-        warn("使用的是系统解释器", "建议装进独立环境，避免污染系统 Python")
+        warn("using system interpreter",
+             "install into a virtual env to avoid polluting system Python")
 
     # ----------------------------------------------------------------------
     # 2. Toolkit root and script tree
@@ -131,7 +132,7 @@ def main():
             import alamodekit_config as _c
             alt = os.path.dirname(os.path.abspath(_c.__file__))
             if os.path.isfile(os.path.join(alt, "alamodekit.py")):
-                note("本目录没有 alamodekit.py，改用已安装副本", alt)
+                note("no alamodekit.py here, using installed copy", alt)
                 ROOT = alt
         except Exception:
             pass
@@ -140,9 +141,9 @@ def main():
     for f in ("alamodekit.py", "alamodekit_config.py", "alamodekit_io.py",
               "alamode_input.py", "plot_style.py"):
         if os.path.isfile(os.path.join(ROOT, f)):
-            ok("模块存在: %s" % f)
+            ok("module present: %s" % f)
         else:
-            fail("模块缺失: %s" % f, os.path.join(ROOT, f))
+            fail("module missing: %s" % f, os.path.join(ROOT, f))
 
     if os.path.isdir(ROOT):
         sections = [d for d in sorted(os.listdir(ROOT))
@@ -155,15 +156,16 @@ def main():
                     scripts += [os.path.join(sect, sub, f) for f in os.listdir(sp)
                                 if f.endswith(".py")]
         if len(sections) == 7:
-            ok("No.X 章节齐全", "7 个: %s" % ", ".join(sections))
+            ok("No.X sections complete", "7 found: %s" % ", ".join(sections))
         else:
-            fail("No.X 章节数异常", "找到 %d 个: %s" % (len(sections), sections))
+            fail("No.X section count wrong",
+                 "found %d: %s" % (len(sections), sections))
         if scripts:
-            ok("脚本文件", "%d 个 .py" % len(scripts))
+            ok("script files", "%d .py files" % len(scripts))
         else:
-            fail("No.X 下没有脚本", "脚本树缺失或位置不对")
+            fail("no scripts under No.X", "script tree missing or misplaced")
     else:
-        fail("toolkit root 不是目录", ROOT)
+        fail("toolkit root is not a directory", ROOT)
 
     # ----------------------------------------------------------------------
     # 3. Launcher registration vs. files on disk
@@ -173,7 +175,7 @@ def main():
     try:
         import alamodekit as ak
     except Exception as exc:
-        fail("无法导入 alamodekit", repr(exc))
+        fail("cannot import alamodekit", repr(exc))
         ak = None
 
     if ak is not None:
@@ -185,27 +187,27 @@ def main():
         except Exception:
             pass
         BASE = base_path_cfg or os.path.dirname(os.path.abspath(ak.__file__))
-        out("  launcher 解析脚本树用 : %s" % BASE)
+        out("  launcher script tree root : %s" % BASE)
         if base_path_cfg:
-            note("settings.yaml 里 alamodekit.base_path 已设置", base_path_cfg)
+            note("alamodekit.base_path set in settings.yaml", base_path_cfg)
         else:
-            note("alamodekit.base_path 为空 -> 回退到启动器所在目录")
+            note("alamodekit.base_path is empty -> falling back to launcher directory")
         if os.path.isdir(BASE):
-            ok("脚本树根存在")
+            ok("script tree root exists")
         else:
-            fail("脚本树根不存在", BASE)
+            fail("script tree root does not exist", BASE)
 
         reg = getattr(ak, "SCRIPT_PATHS", None)
         if reg is None:
-            warn("启动器没有 SCRIPT_PATHS 属性，跳过注册表核对")
+            warn("launcher has no SCRIPT_PATHS attribute, skipping registry check")
         else:
             missing = sorted(k for k, v in reg.items()
                              if not os.path.isfile(os.path.join(BASE, v["path"])))
             if missing:
-                fail("已注册但找不到脚本文件",
-                     "%d 个: %s" % (len(missing), missing[:6]))
+                fail("registered but script file not found",
+                     "%d missing: %s" % (len(missing), missing[:6]))
             else:
-                ok("菜单注册的 %d 个功能全部能定位到文件" % len(reg))
+                ok("all %d registered menu functions resolve to files" % len(reg))
 
     # ----------------------------------------------------------------------
     # 4. settings.yaml
@@ -215,25 +217,26 @@ def main():
         from alamodekit_config import load_config, get_settings_path
         load_config()
         cfg_path = get_settings_path()
-        ok("配置加载成功", cfg_path)
+        ok("config loaded", cfg_path)
         if os.environ.get("ALAMODEKIT_CONFIG"):
-            note("来源", "环境变量 ALAMODEKIT_CONFIG")
+            note("source", "env var ALAMODEKIT_CONFIG")
         elif os.path.abspath(cfg_path).startswith(os.path.abspath(os.getcwd())):
-            note("来源", "当前目录下的 settings.yaml")
+            note("source", "settings.yaml in current directory")
         else:
-            note("来源", "随包副本")
+            note("source", "bundled copy")
         cfg = load_config()
         keys = sorted(k for k in cfg if not k.startswith("_"))
         if "alamode" not in cfg:
             # A malformed file (bad indentation, a stray character) parses into
             # something that has no `alamode` key at all -- and every downstream
             # lookup then quietly falls back to its default.
-            warn("settings.yaml 里没有 alamode 段",
-                 "顶层键为 %s；请检查缩进与格式" % keys)
+            warn("no alamode section in settings.yaml",
+                 "top-level keys are %s; check indentation and format" % keys)
         if not cfg.get("plotting"):
-            warn("settings.yaml 里没有 plotting 段", "绘图脚本将使用内置默认值")
+            warn("no plotting section in settings.yaml",
+                 "plotting scripts will use built-in defaults")
     except Exception as exc:
-        fail("配置加载失败", repr(exc))
+        fail("config load failed", repr(exc))
 
     # ----------------------------------------------------------------------
     # 5. ALAMODE binaries
@@ -246,52 +249,52 @@ def main():
         from alamodekit_config import get_alamode_bin, get_alamode_config
         bin_dir = (get_alamode_config() or {}).get("bin_dir", "") or ""
     except Exception as exc:
-        fail("无法读取 alamode 配置", repr(exc))
+        fail("cannot read alamode config", repr(exc))
 
     if bin_dir:
         out("  bin_dir : %s" % bin_dir)
         if "username" in bin_dir.replace("\\", "/"):
-            fail("bin_dir 仍是出厂占位符",
-                 "改成你自己的 ALAMODE 编译目录，例如 /home/you/alamode/build")
+            fail("bin_dir is still the factory placeholder",
+                 "set it to your ALAMODE build directory, e.g. /home/you/alamode/build")
         else:
             expanded = os.path.expanduser(bin_dir)
             if os.path.isdir(expanded):
-                ok("bin_dir 存在")
+                ok("bin_dir exists")
                 bin_usable = True
             else:
-                fail("bin_dir 不存在", expanded)
+                fail("bin_dir does not exist", expanded)
     else:
-        warn("bin_dir 为空", "将依赖系统 PATH 查找 alm / anphon / ...")
+        warn("bin_dir is empty", "will rely on system PATH for alm / anphon / ...")
         bin_usable = True       # an empty bin_dir legitimately means "use PATH"
 
     for name in ("alm", "anphon", "analyze_phonons", "dfc2"):
         if not bin_usable:
-            note("%s  (跳过，先修好 bin_dir)" % name)
+            note("%s  (skipped, fix bin_dir first)" % name)
             continue
         if get_alamode_bin is None:
-            fail("%s  (无法解析路径)" % name)
+            fail("%s  (cannot resolve path)" % name)
             continue
         try:
             p = get_alamode_bin(name)
         except Exception as exc:
-            fail("解析 %s 路径失败" % name, repr(exc))
+            fail("failed to resolve %s path" % name, repr(exc))
             continue
         # A POSIX path is not "absolute" to os.path on Windows, so treat a
         # leading slash as absolute as well.
         if os.path.isabs(p) or p.replace("\\", "/").startswith("/"):
             if os.path.isfile(p):
                 if os.name == "nt" or os.access(p, os.X_OK):
-                    ok("%s 可执行" % name, p)
+                    ok("%s is executable" % name, p)
                 else:
-                    fail("%s 没有执行权限" % name, "chmod +x %s" % p)
+                    fail("%s has no execute permission" % name, "chmod +x %s" % p)
             else:
-                fail("%s 找不到" % name, p)
+                fail("%s not found" % name, p)
         else:
             found = shutil.which(p)
             if found:
-                ok("%s 在 PATH 上" % name, found)
+                ok("%s on PATH" % name, found)
             else:
-                fail("%s 既不在 PATH 上，bin_dir 也无法解析" % name, p)
+                fail("%s neither on PATH nor resolvable via bin_dir" % name, p)
 
     # ----------------------------------------------------------------------
     # 6. Python dependencies
@@ -300,19 +303,20 @@ def main():
     for mod, req in REQUIRED:
         if has(mod):
             v = version_of(mod)
-            ok("%-11s %s" % (mod, v or "(版本未知)"))
+            ok("%-11s %s" % (mod, v or "(version unknown)"))
             if mod == "yaml" and not v:
-                warn("PyYAML 未正常暴露 __version__",
-                     "配置可能走了内置兜底解析器")
+                warn("PyYAML does not expose __version__",
+                     "config may use the built-in fallback parser")
         elif mod == "yaml":
-            warn("PyYAML 未安装", "内置兜底解析器可用，但建议 pip install %s" % req)
+            warn("PyYAML not installed",
+                 "built-in fallback parser available, but pip install %s is recommended" % req)
         else:
-            fail("%s 未安装" % mod, "pip install %s" % req)
+            fail("%s not installed" % mod, "pip install %s" % req)
     for mod, why in OPTIONAL:
         if has(mod):
             ok("%-11s %s" % (mod, version_of(mod) or ""), why)
         else:
-            note("%-11s (可选，未安装)" % mod, why)
+            note("%-11s (optional, not installed)" % mod, why)
 
     # ----------------------------------------------------------------------
     # 7. Headless matplotlib smoke test
@@ -321,36 +325,36 @@ def main():
     if has("matplotlib"):
         try:
             import matplotlib
-            matplotlib.use("Agg")           # 集群节点没有显示器
+            matplotlib.use("Agg")           # cluster nodes have no display
             import matplotlib.pyplot as plt
             fig = plt.figure(figsize=(2, 2))
             fig.add_subplot(111).plot([0, 1], [0, 1])
             fig.canvas.draw()
             plt.close(fig)
-            ok("Agg 后端可正常出图")
+            ok("Agg backend can render")
         except Exception as exc:
-            fail("matplotlib 无法出图", repr(exc))
-        note("MPLBACKEND", os.environ.get("MPLBACKEND", "(未设置)"))
+            fail("matplotlib cannot render", repr(exc))
+        note("MPLBACKEND", os.environ.get("MPLBACKEND", "(not set)"))
     else:
-        warn("跳过", "matplotlib 未安装，No.2 等绘图功能不可用")
+        warn("skipped", "matplotlib not installed, No.2 plotting unavailable")
 
     # ----------------------------------------------------------------------
     # 8. MPI
     # ----------------------------------------------------------------------
-    heading("8. MPI (No.5/502 并行, No.6/603 任务脚本)")
+    heading("8. MPI (No.5/502 parallel, No.6/603 job scripts)")
     mpi = shutil.which("mpirun") or shutil.which("mpiexec")
     if mpi:
-        ok("找到 MPI 启动器", mpi)
+        ok("MPI launcher found", mpi)
         try:
             r = subprocess.run([mpi, "--version"], capture_output=True,
                                text=True, timeout=20)
             first = ((r.stdout or "") + (r.stderr or "")).strip().splitlines()
             if first:
-                note("版本", first[0][:70])
+                note("version", first[0][:70])
         except Exception:
             pass
     else:
-        warn("未找到 mpirun / mpiexec", "串行运行不受影响")
+        warn("mpirun / mpiexec not found", "serial runs are unaffected")
 
     # ----------------------------------------------------------------------
     # 9. Working directory
@@ -359,29 +363,29 @@ def main():
     cwd = os.path.abspath(args.project or os.getcwd())
     out("  working dir : %s" % cwd)
     if os.path.isdir(cwd) and os.access(cwd, os.W_OK):
-        ok("可写（alm.in / *.bands 等会生成在这里）")
+        ok("writable (alm.in / *.bands etc. will be generated here)")
     else:
-        fail("不可写", cwd)
+        fail("not writable", cwd)
 
     # ----------------------------------------------------------------------
     # Summary
     # ----------------------------------------------------------------------
     out("")
     out("=" * 60)
-    out("  结果：%d 项失败，%d 项警告" % (len(FAILS), len(WARNS)))
+    out("  Result: %d failed, %d warnings" % (len(FAILS), len(WARNS)))
     for name in FAILS:
         out("    FAIL  %s" % name)
     for name in WARNS:
         out("    WARN  %s" % name)
     out("=" * 60)
     if not FAILS:
-        out("  部署基本可用。最后确认 config/settings.yaml 的 alamode.bin_dir")
-        out("  指向你自己的 ALAMODE 编译目录，然后运行 alamodekit 即可。")
+        out("  Deployment is essentially usable. Confirm that alamode.bin_dir in")
+        out("  config/settings.yaml points to your ALAMODE build directory, then run alamodekit.")
 
     if args.save:
         with open(args.save, "w", encoding="utf-8") as fh:
             fh.write("\n".join(REPORT))
-        print("\n  报告已写入: %s" % args.save)
+        print("\n  Report written to: %s" % args.save)
 
     return len(FAILS)
 

@@ -20,7 +20,7 @@ dependency) is available for desktop post-processing analysis.
 
 ---
 
-## ✨ Features
+## Features
 
 - **Three-level interactive menu** dispatching to **43** menu functions
   (44 on-disk scripts, including 1 imported plotting companion) across
@@ -50,7 +50,7 @@ dependency) is available for desktop post-processing analysis.
 
 ---
 
-## 📦 Repository layout
+## Repository layout
 
 ```
 alamodekit_linux/
@@ -105,7 +105,7 @@ alamodekit_linux/
 
 ---
 
-## 🚀 Installation
+## Installation
 
 > **Deploying this on somebody else's machine?** Follow
 > **[DEPLOYMENT.md](DEPLOYMENT.md)** — it covers the three install modes, the
@@ -157,7 +157,7 @@ alamodekit
 
 ---
 
-## 🧪 Testing
+## Testing
 
 The toolkit ships a **pytest suite** under `tests/` that guards the four
 shared modules — the common layer every subprogram depends on:
@@ -185,7 +185,7 @@ The same suite runs in CI on every push. See `tests/README.md` for details.
 
 ---
 
-## ⚙️ Configuration
+## Configuration
 
 Open **`config/settings.yaml`** and point `alamode.bin_dir` at your compiled
 ALAMODE build:
@@ -217,7 +217,7 @@ own settings. Leave `alamodekit.base_path` empty.
 
 ---
 
-## 🧭 Using the menu
+## Using the menu
 
 Run `alamodekit` (or `python alamodekit.py`):
 
@@ -250,23 +250,23 @@ Run `alamodekit` (or `python alamodekit.py`):
 
 ---
 
-## ✍️ Authors / 作者
+## Authors
 
-- **刘欣 (Xin Liu)** — 刘欣课题组，纺织新材料与先进加工全国重点实验室，武汉纺织大学 — `liux@wtu.edu.cn`
-- **刘宇佳 (Yujia Liu)** — 同上 — `416502968@qq.com`
+- **刘欣 (Xin Liu)** — Liu Xin Group, State Key Laboratory of New Textile Materials and Advanced Processing, Wuhan Textile University — `liux@wtu.edu.cn`
+- **刘宇佳 (Yujia Liu)** — same affiliation — `416502968@qq.com`
 
 Questions and bug reports are welcome via
 [GitHub Issues](https://github.com/Lyyyyyo/alamodekit/issues).
 
 ---
 
-## 🤝 Acknowledgements
+## Acknowledgements
 
 ALAMODEkit builds on [ALAMODE](https://alamode.readthedocs.io/) by Terumasa
 Tadano and co-authors. This edition only invokes the compiled ALAMODE
 binaries; it does not redistribute the ALAMODE source code.
 
-## 📄 License
+## License
 
 MIT — see [LICENSE](LICENSE). ALAMODE and ShengBTE are independent third-party
 projects under their own licenses.
