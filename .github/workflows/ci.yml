@@ -155,25 +155,31 @@ jobs:
 
       - name: Smoke-test the external interfaces (No.7)
         run: |
+          # These helpers write their outputs into the current working
+          # directory, so run them from a dedicated empty folder and put the
+          # inputs there too (relative input/output paths then line up).
+          mkdir -p /tmp/ext && cd /tmp/ext
           # thermo_from_dos: build a tiny DOS and check it integrates.
           MPLBACKEND=Agg python - <<'PY'
           import numpy as np
           _trapz = getattr(np, 'trapezoid', None) or np.trapz
           f=np.arange(0,501,5.0); dos=np.exp(-((f-200)/30)**2)*6/_trapz(np.exp(-((f-200)/30)**2),f)
-          with open('/tmp/t.dos','w') as fh:
+          with open('t.dos','w') as fh:
               fh.write('#\n# dos\n# f d\n')
               for a,b in zip(f,dos): fh.write(f'{a:6.1f} {b:10.6f}\n')
           PY
-          MPLBACKEND=Agg python No.7/701/thermo_from_dos.py /tmp/t.dos --tmax 100 --tstep 100 >/dev/null && echo "thermo OK"
+          MPLBACKEND=Agg python "${GITHUB_WORKSPACE}/No.7/701/thermo_from_dos.py" t.dos --tmax 100 --tstep 100 >/dev/null && echo "thermo OK"
           # structure_to_vesta: export a POSCAR to all formats.
-          printf 'test\n1.0\n4 0 0\n0 4 0\n0 0 4\nSi\n1\nDirect\n0 0 0\n' > /tmp/POSCAR
-          python No.7/703/structure_to_vesta.py /tmp/POSCAR --format all
-          test -f /tmp/POSCAR.xsf && test -f /tmp/POSCAR.cif && echo "structure export OK"
+          printf 'test\n1.0\n4 0 0\n0 4 0\n0 0 4\nSi\n1\nDirect\n0 0 0\n' > POSCAR
+          python "${GITHUB_WORKSPACE}/No.7/703/structure_to_vesta.py" POSCAR --format all
+          test -f POSCAR.xsf && test -f POSCAR.cif && echo "structure export OK"
 
       - name: Smoke-test the vibration visualiser (No.7/706)
         run: |
           # Build a tiny 1-kpoint Si .evec and turn it into an .axsf.
-          cat > /tmp/POSCAR2 <<'EOF'
+          # vib_vesta writes the .axsf into the current working directory.
+          mkdir -p /tmp/vib && cd /tmp/vib
+          cat > POSCAR2 <<'EOF'
           Si
           1.0
           5.43 0 0
@@ -206,7 +212,7 @@ jobs:
                   sign = '-' if (m>3 and k>=3) else ''
                   lat.append(f'  {sign}{v:.7e}   0.0000000e+00')
               lat.append('')
-          open('/tmp/Si.evec','w').write('\n'.join(lat)+'\n')
+          open('Si.evec','w').write('\n'.join(lat)+'\n')
           PY
-          python No.7/706/vib_vesta.py /tmp/POSCAR2 /tmp/Si.evec -k 1 --modes 4 --frames 4 >/dev/null
-          test -f /tmp/Si_k1_mode4.axsf && echo "vib_vesta OK"
+          python "${GITHUB_WORKSPACE}/No.7/706/vib_vesta.py" POSCAR2 Si.evec -k 1 --modes 4 --frames 4 >/dev/null
+          test -f Si_k1_mode4.axsf && echo "vib_vesta OK"

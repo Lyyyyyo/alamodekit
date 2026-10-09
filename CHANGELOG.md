@@ -29,6 +29,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   into the current working directory, so the path assertion failed on every
   Python version; the test now runs inside a dedicated empty folder with the
   template placed there too, matching the tool's behaviour.
+- **No.7 external-interface and vibration CI steps.** Same class of fix:
+  `structure_to_vesta.py` and `vib_vesta.py` also write their exported
+  `.xsf`/`.cif`/`.axsf` into the current working directory, but the smoke
+  tests ran from the checkout root while looking for those files next to the
+  `/tmp` inputs; both steps now run in dedicated empty folders
+  (`/tmp/ext`, `/tmp/vib`) with their inputs placed alongside.
 
 ### Changed
 - Package version bumped to **4.0** (author-assigned release number); the
