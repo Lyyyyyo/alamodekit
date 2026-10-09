@@ -43,6 +43,10 @@ import sys
 import argparse
 import csv
 import numpy as np
+try:                        # NumPy >= 2.0 renamed trapz -> trapezoid
+    _trapz = np.trapezoid
+except AttributeError:      # NumPy < 2.0
+    _trapz = np.trapz
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
 _ROOT = os.path.abspath(os.path.join(_HERE, os.pardir, os.pardir))
@@ -153,7 +157,7 @@ def main(argv=None):
     zpe_mev = zpe / 1.602176634e-22
 
     # Sanity check: the DOS integral should equal 3*N (number of modes).
-    dos_integral = float(np.trapz(dos, freq))
+    dos_integral = float(_trapz(dos, freq))
 
     print("=" * 60)
     print(f"File: {args.file}")

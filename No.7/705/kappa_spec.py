@@ -38,6 +38,10 @@ import sys
 import argparse
 import csv
 import numpy as np
+try:                        # NumPy >= 2.0 renamed trapz -> trapezoid
+    _trapz = np.trapezoid
+except AttributeError:      # NumPy < 2.0
+    _trapz = np.trapz
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
 _ROOT = os.path.abspath(os.path.join(_HERE, os.pardir, os.pardir))
@@ -119,7 +123,7 @@ def plot_spec(blocks, temps, out_base):
         ax.plot(freqs, avg, "-", color=palette[i % len(palette)],
                 linewidth=lw, label=f"T = {T:g} K")
         # Report the integrated (cumulative) kappa as a cross-check.
-        integral = np.trapz(avg, freqs)
+        integral = _trapz(avg, freqs)
         print(f"  T={T:g}K: integral of k_avg = {integral:.4f} W/mK "
               f"(should match the total kappa)")
     ax.set_xlabel("Frequency (cm$^{-1}$)")

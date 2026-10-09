@@ -154,7 +154,8 @@ jobs:
           # thermo_from_dos: build a tiny DOS and check it integrates.
           MPLBACKEND=Agg python - <<'PY'
           import numpy as np
-          f=np.arange(0,501,5.0); dos=np.exp(-((f-200)/30)**2)*6/np.trapz(np.exp(-((f-200)/30)**2),f)
+          _trapz = getattr(np, 'trapezoid', None) or np.trapz
+          f=np.arange(0,501,5.0); dos=np.exp(-((f-200)/30)**2)*6/_trapz(np.exp(-((f-200)/30)**2),f)
           with open('/tmp/t.dos','w') as fh:
               fh.write('#\n# dos\n# f d\n')
               for a,b in zip(f,dos): fh.write(f'{a:6.1f} {b:10.6f}\n')
@@ -169,17 +170,17 @@ jobs:
         run: |
           # Build a tiny 1-kpoint Si .evec and turn it into an .axsf.
           cat > /tmp/POSCAR2 <<'EOF'
-Si
-1.0
-5.43 0 0
-0 5.43 0
-0 0 5.43
-Si
-2
-Direct
-0 0 0
-0.25 0.25 0.25
-EOF
+          Si
+          1.0
+          5.43 0 0
+          0 5.43 0
+          0 0 5.43
+          Si
+          2
+          Direct
+          0 0 0
+          0.25 0.25 0.25
+          EOF
           python - <<'PY'
           lat = ['# Lattice vectors of the primitive cell',
                  '  5.43 0 0', '  0 5.43 0', '  0 0 5.43', '',

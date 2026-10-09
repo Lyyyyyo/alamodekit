@@ -15,6 +15,15 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `&interaction` / `NORDER = 1` namelist. ANPHON has no such namelist; the
   force-constant expansion order is carried by FCSXML/FC2XML, so the block is
   now omitted. The four ALM scripts under No.1/101 correctly keep it.
+- **CI workflow validity and NumPy 2.x compatibility.** The
+  vibration-visualiser CI step embedded a POSCAR heredoc whose body was
+  accidentally left at column 0, which made `.github/workflows/ci.yml`
+  invalid YAML (the `run:` block scalar ended early) so the workflow failed
+  before creating any job; the heredoc body is now correctly indented. In
+  addition, `thermo_from_dos.py` and `kappa_spec.py` called the removed
+  `numpy.trapz` (renamed `numpy.trapezoid` in NumPy 2.0); both now use a
+  version-agnostic integration alias, and the in-CI Python snippet was fixed
+  the same way.
 
 ### Changed
 - Package version bumped to **4.0** (author-assigned release number); the
