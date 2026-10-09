@@ -24,6 +24,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `numpy.trapz` (renamed `numpy.trapezoid` in NumPy 2.0); both now use a
   version-agnostic integration alias, and the in-CI Python snippet was fixed
   the same way.
+- **No.6 convergence-helper CI step.** The smoke test put the template in
+  `/tmp` but `conv_test_helper.py` writes its expanded inputs and `run_all.sh`
+  into the current working directory, so the path assertion failed on every
+  Python version; the test now runs inside a dedicated empty folder with the
+  template placed there too, matching the tool's behaviour.
 
 ### Changed
 - Package version bumped to **4.0** (author-assigned release number); the

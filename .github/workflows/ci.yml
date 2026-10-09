@@ -144,10 +144,14 @@ jobs:
           # input_validator: build a tiny namelist file and check it parses.
           printf '&general\n  PREFIX = Si\n/\n' > /tmp/t.in
           MPLBACKEND=Agg python No.6/604/input_validator.py /tmp/t.in || true
-          # conv_test_helper: generate a 1x1 sweep from a template.
-          printf '&general\n  PREFIX = T\n  KPMESH = @K@\n/\n' > /tmp/tmpl.in
-          python No.6/604/conv_test_helper.py --template /tmp/tmpl.in --param "@K@:4,8" --exe anphon >/dev/null
-          test -f /tmp/tmpl__K_4.in && test -f run_all.sh && echo "No.6 helpers OK"
+          # conv_test_helper writes every expanded file AND run_all.sh into
+          # the current working directory, so run it from a dedicated empty
+          # folder with the template placed there too (relative paths line up).
+          mkdir -p /tmp/conv && cd /tmp/conv
+          printf '&general\n  PREFIX = T\n  KPMESH = @K@\n/\n' > tmpl.in
+          python "${GITHUB_WORKSPACE}/No.6/604/conv_test_helper.py" \
+              --template tmpl.in --param "@K@:4,8" --exe anphon >/dev/null
+          test -f tmpl__K_4.in && test -f run_all.sh && echo "No.6 helpers OK"
 
       - name: Smoke-test the external interfaces (No.7)
         run: |
