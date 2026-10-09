@@ -176,7 +176,7 @@ def main(argv=None):
             ds = spglib.get_dataset(cell, symprec=1e-5)
         elif hasattr(spglib, "get_symmetry_dataset"):
             ds = spglib.get_symmetry_dataset(cell, symprec=1e-5)
-        print("=" * 50)
+        print("=" * 60)
         print(f"Space group : {sg}")
         if ds is not None:
             number = getattr(ds, "number", None) or getattr(ds, "spacegroup_number", None)
@@ -200,7 +200,7 @@ def main(argv=None):
         if not have_ase:
             print("(via built-in POSCAR reader + spglib; install 'ase' for "
                   "other formats)")
-        print("=" * 50)
+        print("=" * 60)
         return
 
     # The remaining modes need ASE.
@@ -240,7 +240,7 @@ def main(argv=None):
     elif args.neighbours:
         from ase.neighborlist import neighbor_list
         i, j, d = neighbor_list("ijd", atoms, args.cutoff)
-        print("=" * 50)
+        print("=" * 60)
         print(f"Neighbours within {args.cutoff} Angstrom:")
         sym = atoms.get_chemical_symbols()
         for idx in range(len(atoms)):
@@ -250,7 +250,7 @@ def main(argv=None):
             neigh = sorted(zip(d[mask], j[mask]))
             desc = ", ".join(f"{sym[j]:>2}@{dist:.3f}" for dist, j in neigh)
             print(f"  atom {idx+1:>3} ({sym[idx]:>2}) -> {desc}")
-        print("=" * 50)
+        print("=" * 60)
 
     elif args.reduced:
         cell = (atoms.get_cell(), atoms.get_scaled_positions(),

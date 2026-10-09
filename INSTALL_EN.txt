@@ -1,0 +1,544 @@
+================================================================================
+  ALAMODEkit  (Linux / command-line edition)   --   Installation and Caveats
+--------------------------------------------------------------------------------
+  File         : INSTALL_EN.txt   (English version of INSTALL.txt)
+  Applies to   : 4.0
+  Last updated : 2026-10-08
+  Platform     : Linux (macOS / WSL work too; the native Windows command line
+                 is not supported)
+================================================================================
+
+
+[0] READ THESE FIRST
+--------------------------------------------------------------------------------
+  1. This toolkit does NOT bundle and does NOT need the ALAMODE source code.
+     It only invokes the four executables you compile yourself -- alm, anphon,
+     analyze_phonons, dfc2 -- plus a self-contained set of post-processing and
+     plotting code.
+
+  2. A virtual environment is NOT required. Like vaspkit, you can simply unpack
+     the archive, install the dependencies and run it -- no venv / conda
+     needed. That "unpack and run" route is section [2] and is recommended for
+     most users.
+
+     Virtual environments (venv / conda) are an OPTIONAL extra, mainly for
+     isolating Python dependency versions on a shared cluster; see section [3].
+
+  3. There are really only two things to set up:
+        (1) the Python dependencies (numpy, matplotlib, pandas; PyYAML optional);
+        (2) ONE line in config/settings.yaml -- alamode.bin_dir.
+
+  4. Always run the health check afterwards:
+        python3 check_deploy.py
+     The deployment is finished only when it reports 0 failures
+     (the report is printed in Chinese: "0 项失败" means "0 failures").
+
+  Short on time? Just work through section [2]; it takes about five minutes.
+
+
+================================================================================
+[1] PREREQUISITES
+================================================================================
+
+  Required:
+    - Linux, with python3 available
+    - Python >= 3.8
+    - Python packages: numpy, matplotlib, pandas (PyYAML optional -- a built-in
+      pure-Python fallback parser is used when it is absent). Listed in
+      requirements.txt; one command installs them all
+
+  Install these only if you need the corresponding features:
+    - a compiled ALAMODE build  ->  No.5 (solver runners), No.2/202
+    - MPI (mpirun)              ->  No.5/502 in parallel, No.6/603
+    - ShengBTE                  ->  No.4 only
+    - spglib, ase               ->  No.7/704 only: pip install spglib ase
+
+  Not required:
+    - root or sudo privileges (installing into your home directory is enough)
+    - a pre-installed or compiled ALAMODE source tree -- all you need is the
+      four executables
+    - a virtual environment
+
+
+================================================================================
+[2] QUICK INSTALL: UNPACK AND RUN (vaspkit-style, no virtual environment)
+================================================================================
+
+--------------------------------------------------------------------------------
+  STEP 1  Unpack the archive
+--------------------------------------------------------------------------------
+  Copy alamodekit-4.0.tar.gz onto the server (scp / USB / cluster upload),
+  then:
+
+      mkdir -p ~/apps
+      tar -xzf alamodekit-4.0.tar.gz -C ~/apps
+      cd ~/apps/alamodekit-4.0
+
+  Sanity check -- you are in the right place if the current directory contains
+  all of these:
+
+      alamodekit.py    config/    No.1/  No.2/ ... No.7/
+
+  If not, you are one level too deep or too shallow.
+
+--------------------------------------------------------------------------------
+  STEP 2  Install the Python dependencies
+--------------------------------------------------------------------------------
+  Preferred -- install into the current user's home (no root needed, does not
+  touch the system Python):
+
+      python3 -m pip install --user -r requirements.txt
+
+  If pip is unavailable that way, or you know you can write to the global
+  environment:
+
+      python3 -m pip install -r requirements.txt
+
+  Three required packages: numpy, matplotlib, pandas. PyYAML is recommended
+  but the toolkit also runs without it (a pure-Python YAML fallback parser is
+  built in).
+
+  [NOTE A] Packages installed with --user put commands under ~/.local/bin; make
+  sure it is on PATH:
+      grep -q '\.local/bin' ~/.bashrc || \
+          echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
+
+  [NOTE B] If the target machine has no internet access (common on clusters),
+  download the packages on a machine that does:
+      pip download -r requirements.txt -d ./wheels
+  copy wheels/ across and install offline:
+      pip install --no-index --find-links=./wheels -r requirements.txt
+
+  [NOTE C] On a cluster you may need to load the Python module first:
+      module load python/3.11
+    Load the module first, then run pip.
+
+--------------------------------------------------------------------------------
+  STEP 3  Edit that one line in the configuration
+--------------------------------------------------------------------------------
+      vi config/settings.yaml
+
+  Find this (around line 34):
+
+      alamode:
+        bin_dir: /home/username/alamode/alamode/build   <- placeholder; MUST change
+
+  Set it to the directory that holds the four executables alm, anphon,
+  analyze_phonons and dfc2. Not sure where that is?
+
+      which alm
+      # e.g. it prints /home/youruser/alamode/build/alm
+      # then bin_dir becomes /home/youruser/alamode/build
+
+  ! Symptom of forgetting: No.5 fails with
+    "No such file or directory: /home/username/alamode/...".
+
+  ! Leave alamodekit.base_path in the same file EMPTY -- every install mode
+    falls back to the correct directory by itself.
+
+  You may postpone this line if you only use features that never call the
+  ALAMODE executables: No.1 (input generation), No.2 (analysis and plotting,
+  except 202), No.6 and No.7.
+
+--------------------------------------------------------------------------------
+  STEP 4  Health check (do not skip it)
+--------------------------------------------------------------------------------
+      python3 check_deploy.py
+
+  It checks nine things: the Python version; the script tree; that all 43
+  registered menu entries resolve to real files; which settings.yaml is actually
+  in use; the four ALAMODE binaries; the Python dependencies; whether matplotlib
+  can really draw on a headless machine; MPI; and that the current directory is
+  writable.
+
+  The exit status is the number of failures, so it drops straight into a script:
+      python3 check_deploy.py || echo "deployment incomplete"
+
+  A healthy deployment ends like this:
+      ========================================================================
+        结果：0 项失败，N 项警告
+      ========================================================================
+  (the line is Chinese: "0 项失败" = 0 failures, "N 项警告" = N warnings.
+  A missing MPI, the system interpreter, etc. are warnings only and do not
+  affect serial use.)
+
+  Other useful arguments:
+      python3 check_deploy.py --root /opt/ALAMODEkit --project ~/work/Si
+      python3 check_deploy.py --save deploy.txt     # keep a transcript
+
+--------------------------------------------------------------------------------
+  STEP 5  Start it
+--------------------------------------------------------------------------------
+  ! cd into your calculation directory before starting. Generated files
+    (alm.in, *.bands, ...) land in the CURRENT WORKING DIRECTORY, not in the
+    toolkit directory.
+
+      cd ~/work/Si
+      python3 ~/apps/alamodekit-4.0/alamodekit.py
+
+  The menu appears; pick items by number.
+
+  To find out which configuration file is really being read:
+      python3 -c "import alamodekit_config as c; print(c.get_settings_path())"
+
+--------------------------------------------------------------------------------
+  STEP 6 (optional)  Add a global `alamodekit` command, just like `vaspkit`
+--------------------------------------------------------------------------------
+  Goal: in any directory, typing the single word
+
+      alamodekit
+
+  brings up the menu instead of typing the full path. In unpack-and-run mode,
+  write a three-line wrapper (the closing EOF must start in column 1 -- do not
+  indent it):
+
+mkdir -p ~/.local/bin
+cat > ~/.local/bin/alamodekit <<'EOF'
+#!/bin/sh
+exec python3 "$HOME/apps/alamodekit-4.0/alamodekit.py" "$@"
+EOF
+chmod +x ~/.local/bin/alamodekit
+grep -q '\.local/bin' ~/.bashrc || \
+    echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
+
+  Then source ~/.bashrc and type alamodekit from any directory.
+
+  Three things not to get wrong:
+    - The python3 on the first line must be the interpreter that has numpy /
+      matplotlib / pandas installed. If unsure, hard-code the absolute path
+      printed by which python3, e.g. exec /usr/bin/python3 ...; otherwise you
+      get "No module named 'numpy'" the moment you pick a feature.
+    - Do not add a cd. The toolkit has to start in the calculation directory
+      you are currently in, so the generated files land there.
+    - The trailing "$@" forwards arguments to the launcher; you do not need it
+      today, but it costs nothing.
+
+  Verify (all three must pass):
+      cd /tmp
+      alamodekit                                  # 1) the menu appears; q quits
+      type -a alamodekit                          # 2) points at your new one
+      echo $PATH | tr ':' '\n' | grep -c local    # 3) non-zero means on PATH
+
+  To remove the command: rm -f ~/.local/bin/alamodekit (the toolkit itself is
+  unaffected). A quick alias works too (interactive bash only):
+      echo "alias alamodekit='python3 $HOME/apps/alamodekit-4.0/alamodekit.py'" >> ~/.bashrc
+
+
+================================================================================
+[3] OPTIONAL: USE A VIRTUAL ENVIRONMENT (venv / conda) TO ISOLATE DEPENDENCIES
+================================================================================
+
+  To repeat: a virtual environment is NOT required. Consider one only if any of
+  the following applies:
+    - a public cluster where many people share one Python and you do not want to
+      touch the global environment;
+    - you run several Python programs needing different numpy / matplotlib
+      versions;
+    - you worry that somebody else upgrading a dependency breaks alamodekit.
+
+  [Route 1] Python's built-in venv:
+
+      python3 -m venv ~/.venvs/alamodekit
+      source ~/.venvs/alamodekit/bin/activate
+      pip install -U pip
+      pip install -r requirements.txt
+
+  [Route 2] conda (if you have Anaconda / Miniconda):
+
+      conda create -n alamodekit python=3.11 -y
+      conda activate alamodekit
+      pip install -r requirements.txt
+
+  On a cluster you normally load the module first:
+      module load python/3.11
+      python3 -m venv ~/.venvs/alamodekit        # or conda create ...
+      source ~/.venvs/alamodekit/bin/activate
+
+  ! After RE-LOGGING IN / opening a new terminal, the environment does NOT
+    activate itself; re-activate it before each use:
+      conda activate alamodekit                   # conda users
+      source ~/.venvs/alamodekit/bin/activate     # venv users
+    Sign it worked: the environment name appears in parentheses at the start
+    of the prompt, e.g. (alamodekit) user@host:~$.
+    Running without activation uses the system Python and fails with
+    command not found / ModuleNotFoundError.
+
+  To leave the environment:
+      conda deactivate                            # conda users
+      deactivate                                  # venv users
+
+  For a global command under a virtual environment, a pip install (modes B/C in
+  section [4]) generates the alamodekit command automatically. When running
+  from unpacked source, replace python3 in the STEP 6 wrapper with the venv's
+  absolute path (e.g. ~/.venvs/alamodekit/bin/python3).
+
+
+================================================================================
+[4] THREE INSTALL MODES -- PICK ONE
+================================================================================
+
+  +-------------+-------------------------+---------------------+----------------------+
+  |             | A: source (recommended) | B: editable install | C: regular install   |
+  +-------------+-------------------------+---------------------+----------------------+
+  | Command     | python <path>/          | pip install -e .    | pip install .        |
+  |             | alamodekit.py           | -> alamodekit       | -> alamodekit        |
+  | Virtual env | not needed              | recommended         | recommended          |
+  | needed?     |                         |                     |                      |
+  | Script tree | the unpacked folder     | the unpacked folder | site-packages        |
+  | Global cmd  | add via STEP 6          | yes                 | yes                  |
+  | Upgrading   | replace the whole dir   | git pull            | reinstall via pip    |
+  | Best for    | shared server / cluster | developers          | hand out one archive |
+  +-------------+-------------------------+---------------------+----------------------+
+
+  Section [2] above is mode A -- the vaspkit-style usage, most common on
+  clusters.
+
+  Mode B (common for developers):
+      pip install -e .
+      alamodekit
+
+  Mode C (regular install into the current Python environment):
+      pip install .
+      alamodekit
+
+  Building distribution artifacts (.tar.gz / .whl) from source:
+      rm -rf build dist *.egg-info        # see section [6], caveat 5 -- mandatory
+      python -m build
+      # or: python setup.py sdist bdist_wheel
+      ls dist/
+      #   alamodekit-4.0.tar.gz            source package; builds on their machine
+      #   alamodekit-4.0-py3-none-any.whl  pure-Python wheel; Linux/macOS
+
+
+================================================================================
+[5] CONFIGURATION -- WHICH FILE, AND WHERE IT IS LOOKED UP
+================================================================================
+
+  config/settings.yaml is the single source of configuration. It has three
+  blocks:
+
+      alamode     --  where the ALAMODE binaries are, and what they are called
+      alamodekit  --  the toolkit itself (leave base_path empty)
+      plotting    --  every plotting parameter: DPI, line width, colours,
+                      colormaps, colorbars, units, output formats
+
+  The file is searched in this order (earlier entries win):
+
+      1. the path in the ALAMODEKIT_CONFIG environment variable
+      2. ./config/settings.yaml in the current working directory
+      3. ./settings.yaml in the current working directory
+      4. the copy shipped with the toolkit
+
+  ! It REPLACES, it does not merge. Dropping in a file of your own means the
+    bundled one stops applying entirely -- so always copy the shipped file and
+    edit that copy, never write a two-line stub.
+
+  The standard pattern when many people share one read-only installation:
+
+      # toolkit installed at a public read-only location; each user points at
+      # their own config from ~/.bashrc
+      export ALAMODEKIT_CONFIG=~/.config/alamodekit.yaml
+
+  Or simply drop a settings.yaml into your own calculation directory.
+
+
+================================================================================
+[6] CAVEATS (every one of these has actually bitten this project)
+================================================================================
+
+  1. bin_dir is a placeholder, not a dependency
+     The shipped value is /home/username/alamode/alamode/build. That is a path
+     placeholder; it does NOT mean the toolkit is tied to ALAMODE. Nothing in
+     this repository imports ALAMODE source code anywhere. Forget to change it
+     and No.5 fails with "No such file or directory".
+
+  2. Leave base_path empty
+     Filling in a path makes it easier to go wrong when switching between
+     "run from source" and "regular install". Empty means "use the directory
+     holding alamodekit.py", which is correct in all three modes.
+
+  3. The configuration file replaces, it does not merge
+     See section [5]. Your own copy must be complete -- do not write just the
+     two bin_dir lines, or every plotting parameter silently reverts to the
+     built-in default.
+
+  4. A virtual environment is optional, not mandatory
+     You can absolutely unpack and run it like vaspkit (section [2]). Use a
+     venv / separate conda environment only to isolate dependencies on a public
+     cluster or when several Python projects conflict on versions. Never use
+     conda's base environment for a shared install.
+
+  5. Clear build/ and dist/ before building a distribution
+     python setup.py bdist_wheel reuses build/bdist.*/wheel, and only removes it
+     after a SUCCESSFUL run. An interrupted build leaves its payload behind, and
+     the next wheel silently contains files that no longer exist in the source.
+     So: always rm -rf build dist *.egg-info first.
+
+  6. Do not touch packages / package_data in setup.py, pyproject.toml or MANIFEST.in
+     The toolkit is flat, and it is setup.py's packages=[""] plus
+     package_dir={"": "."} that attaches the No.X script tree. Remove them and
+     setuptools silently drops all 44 scripts under No.X WITHOUT any error, leaving a
+     pip-installed toolkit that resolves nothing. Read the "Packaging
+     invariants" section of CONTRIBUTING.md before changing packaging config.
+
+  7. Do not leave scratch scripts at the repository root
+     The root directory is declared as a package, so EVERY .py file at the root
+     is shipped to all users.
+
+  8. On a cluster the toolkit must live on a shared filesystem
+     $HOME, /public/home/xxx, /work/xxx are all fine. Never use /tmp, /dev/shm
+     or a node-local disk -- compute nodes cannot see them.
+
+  9. Do not run parallel jobs on the login node
+     No.5/502 invokes mpirun. Starting MPI processes on a login node earns a
+     warning from the administrators, or worse. Use No.6/603 to generate a
+     SLURM / PBS submission script and let the scheduler run it.
+
+ 10. Compute nodes have no display
+     Set this explicitly when needed; putting it in ~/.bashrc is fine:
+         export MPLBACKEND=Agg
+
+ 11. module load is a runtime choice, not configuration
+     No.5/501 and No.5/502 can prepend a module load line before calling the
+     binaries. That choice is made per run; there is no field for it in
+     settings.yaml.
+
+ 12. Moving to another machine / upgrading
+     Upgrade: mode A, replace the whole directory; mode B, git pull; mode C,
+     install again with pip. Uninstall: delete the directory, the virtualenv
+     (if any) and any global command you added:
+       rm -f ~/.local/bin/alamodekit
+
+ 13. When something breaks, include these three things when asking for help
+         python3 check_deploy.py --save deploy.txt && cat deploy.txt
+         python3 -c "import alamodekit_config as c; print(c.get_settings_path())"
+         the full traceback, plus the input file involved
+
+     Together they cover the interpreter, the dependencies, configuration
+     resolution and the binary location in one shot.
+
+
+================================================================================
+[7] COMMON ERRORS AND WHAT TO DO
+================================================================================
+
+  Symptom                            Cause / fix
+  ---------------------------------  ------------------------------------------------
+  ModuleNotFoundError:               Defect in versions before 1.5.0; fixed here. If
+  No module named 'alamodekit_io'    it still happens, that subprogram is missing its
+                                     sys.path bootstrap block -- see "Code style" in
+                                     CONTRIBUTING.md.
+
+  No such file or directory:         bin_dir is still the factory placeholder. See
+  /home/username/alamode/...         STEP 3 in section [2].
+
+  ERROR: alm executable not found    bin_dir points at the wrong directory. It must
+                                     be the DIRECTORY holding the executables, not
+                                     the executable itself.
+
+  command not found: alamodekit      If you used a virtual environment, it is most
+  (or No module named '...')         likely not activated (common after re-logging in):
+                                     look for (alamodekit) at the start of the prompt;
+                                     if absent, run
+                                     conda activate alamodekit
+                                     (venv users: source ~/.venvs/alamodekit/bin/activate).
+                                     See section [3]. Without a virtual environment,
+                                     check that ~/.local/bin is on PATH.
+
+  No module named 'numpy'            Dependencies not installed, or the virtual
+  (or matplotlib / pandas)           environment is not activated. See STEP 2 and
+                                     section [3].
+
+  FileNotFoundError: settings.yaml   None of the candidate locations existed.
+                                     Almost always ALAMODEKIT_CONFIG pointing at a
+                                     nonexistent path.
+
+  ERROR: Script not found!           The launcher is not in the toolkit root. Start
+                                     it by absolute path: python3
+                                     ~/apps/alamodekit-4.0/alamodekit.py
+
+  no display name / plotting error   No display available. Set export MPLBACKEND=Agg
+
+  python3: command not found         No Python 3 on the system. module load
+                                     python/3.x, or ask your administrator.
+
+  A menu entry fails, cause unclear  Run check_deploy.py first; it names the missing
+                                     piece.
+
+
+================================================================================
+[8] ACCEPTANCE TEST -- ONE END-TO-END SMOKE RUN AFTER THE FIRST DEPLOYMENT
+================================================================================
+
+  In any empty directory:
+
+      mkdir -p /tmp/smoke && cd /tmp/smoke
+      printf 'Cu\n1.0\n3.615 0.0 0.0\n0.0 3.615 0.0\n0.0 0.0 3.615\n' > SPOSCAR
+      printf 'Cu\n1\nDirect\n0.0 0.0 0.0\n' >> SPOSCAR
+      python3 ~/apps/alamodekit-4.0/alamodekit.py
+      # pick 1, then 101, then 1; answer y when asked
+      ls
+      # alm.in should appear
+
+  If alm.in appears, then the menu dispatched a subprogram, the shared modules
+  imported, and the file was written into YOUR directory -- the deployment works.
+
+  Before real use, run one small system through the whole chain:
+
+      No.1 (generate input) -> No.5 (run the solver) -> No.2 (analyse and plot)
+
+  That is the step that really exercises the ALAMODE executables you compiled.
+
+
+================================================================================
+[9] ABOUT THIS DOCUMENT / STATUS OF THIS VERSION
+================================================================================
+
+  Document map (so you do not read the same thing twice):
+
+      INSTALL.txt      the Chinese version of this file.
+      INSTALL_EN.txt   this file. English "type it in" guide: installation,
+                       configuration, caveats, error table.
+      README.md        project overview: feature list, repository layout, menu
+                       map, a typical workflow.
+      DEPLOYMENT.md    English deployment detail: side-by-side comparison of the
+                       three install modes, why the configuration lookup order
+                       is what it is, handing the toolkit to a third party, and
+                       the packaging traps that were actually hit. Complementary
+                       to this document, not a duplicate.
+      CONTRIBUTING.md  for people changing the code: dev setup, code style,
+                       packaging invariants, CI.
+      CHANGELOG.md     release history.
+
+  Honest assessment of this version:
+
+    Verified:
+      - all 43 registered menu entries resolve to a file on disk
+      - pip install . installs all 44 scripts (43 menu functions plus 1
+        imported plotting companion)
+        (before 1.5.0 it installed zero -- the most serious packaging defect,
+        now fixed)
+      - the "ModuleNotFoundError the moment you pick it from the menu" defect
+        in 21 subprograms is fixed
+      - all three install modes tested in a fresh environment; the unpacked
+        toolkit also runs directly under the system Python
+      - the sdist is self-contained; rebuilding a wheel from it still yields
+        the complete set of 44 scripts
+      - a one-command health check, check_deploy.py, ships with the toolkit
+
+    Not verified (be aware of this):
+      - never run on a real Linux machine or a real cluster. All of the testing
+        above was done on Windows with a managed Python; module load, mpirun and
+        SLURM submission scripts were only verified logically
+      - never driven through a complete workflow with real ALAMODE executables.
+        run_alm / run_anphon only assemble and send the command; the parsing of
+        actual alm / anphon output has not been checked on real hardware
+      - the CI workflow is written but has never executed (there is no remote
+        repository yet)
+
+    Conclusion: as software that installs, starts and does not fall over the
+    moment you touch it -- ready to deploy. As a production tool validated in a
+    real environment -- treat the first run as integration testing, not as going
+    straight into production.
+
+================================================================================

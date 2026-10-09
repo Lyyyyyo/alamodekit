@@ -25,8 +25,18 @@ from __future__ import annotations
 import os
 import sys
 
-import alamodekit_io
-alamodekit_io.ensure_package_root()
+# --- Bootstrap: make the toolkit root importable when run as a script. ---
+# When this file is executed directly, sys.path[0] is this script's own
+# folder (No.X/<submenu>/), which does NOT contain the toolkit modules.
+# Add the package root (two levels up) to sys.path *before* importing
+# anything toolkit-level. Harmless when imported as a package module.
+_HERE = os.path.dirname(os.path.abspath(__file__))
+_ROOT = os.path.abspath(os.path.join(_HERE, os.pardir, os.pardir))
+if _ROOT not in sys.path:
+    sys.path.insert(0, _ROOT)
+
+import alamodekit_io  # noqa: E402
+alamodekit_io.ensure_package_root()  # noqa: E402
 
 from alamode_input import (parse_poscar, write_namelist, cell_block_lines,
                            read_kpath)
@@ -72,7 +82,8 @@ def main(poscar: str = "POSCAR-unitcell", kpath: str = "KPATH.in",
             f"\tNKD = {len(info['elements'])}; KD = " + " ".join(info['elements']),
             f"\tTMIN = {tmin}; TMAX = {tmax}; DT = {dt}",
         ]),
-        ('interaction', ["\tNORDER = 1"]),
+        # NOTE: ANPHON has no &interaction namelist; the FC expansion order is
+        # carried by FCSXML/FC2XML, not by NORDER (an ALM-only keyword).
         ('cell', cell_block_lines(info['cell'])),
         ('kpoint', ["\t1"] + segments),
         ('scph', [
@@ -87,7 +98,7 @@ def main(poscar: str = "POSCAR-unitcell", kpath: str = "KPATH.in",
     ]
     write_namelist(output, blocks)
 
-    print("\n" + "=" * 20 + " done " + "=" * 20)
+    print("\n" + " done ".center(60, "="))
     print(f"The input file '{output}' has been generated.")
     print("Generated k-path segments:")
     for i, seg in enumerate(segments, 1):

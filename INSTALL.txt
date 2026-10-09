@@ -1,0 +1,471 @@
+================================================================================
+  ALAMODEkit  (Linux / 命令行版)  —— 安装步骤与注意事项    【中文版】
+--------------------------------------------------------------------------------
+  文件      : INSTALL.txt     （中文版；English version: INSTALL_EN.txt）
+  适用版本  : 4.0
+  最后更新  : 2026-10-08
+  适用平台  : Linux（也适用于 macOS / WSL；不支持 Windows 原生命令行）
+================================================================================
+
+
+【0】先读这几行
+--------------------------------------------------------------------------------
+  1. 本工具包【不包含、也不需要】ALAMODE 源码。它只负责调用你自己编译好的
+     alm / anphon / analyze_phonons / dfc2 这四个可执行文件，外加一套独立的
+     后处理与绘图代码。
+
+  2. 【虚拟环境不是必须的】。本工具包可以像 vaspkit 一样：解压、装依赖、
+     直接运行，全程不需要 venv / conda。本文【第 2 节】就是这条"解压即用"
+     路线，推荐大多数人使用。
+
+     虚拟环境（venv / conda）只是【可选方案】，主要用于公共集群上想隔离
+     Python 依赖版本时；见【第 3 节】。
+
+  3. 安装真正要做的只有两件事：
+        ① 装好 Python 依赖（numpy、matplotlib、pandas，PyYAML 可选）；
+        ② 改 config/settings.yaml 里的【一行】—— alamode.bin_dir。
+
+  4. 装完一定要跑一次体检：
+        python3 check_deploy.py
+     看到「0 项失败」才算部署完成。
+
+  不想读全文，直接照【第 2 节】敲一遍，大约 5 分钟。
+
+
+================================================================================
+【1】前提条件
+================================================================================
+
+  必须有的：
+    · Linux 系统，能执行 python3
+    · Python >= 3.8
+    · Python 依赖：numpy、matplotlib、pandas（PyYAML 可选，缺失时有内置
+      纯 Python 兜底解析器）。已列在 requirements.txt 中，一条命令装完
+
+  按需安装（用不到对应功能就不装）：
+    · 编译好的 ALAMODE 四件套  →  No.5 调求解器、No.2/202 分析时需要
+    · MPI（mpirun）            →  No.5/502 并行运行、No.6/603 调度脚本需要
+    · ShengBTE                 →  仅 No.4 相关功能需要
+    · spglib、ase              →  仅 No.7/704 需要：pip install spglib ase
+
+  不需要的：
+    · 不需要 root / sudo 权限（装到自己家目录即可）
+    · 不需要预装或编译 ALAMODE 源码，只要最终有那四个可执行文件即可
+    · 不强制虚拟环境
+
+
+================================================================================
+【2】快速安装：解压即用（vaspkit 风格，无需虚拟环境）【推荐】
+================================================================================
+
+--------------------------------------------------------------------------------
+  第 1 步  解压安装包
+--------------------------------------------------------------------------------
+  把 alamodekit-4.0.tar.gz 传到服务器（scp / U盘 / 集群上传均可），然后：
+
+      mkdir -p ~/apps
+      tar -xzf alamodekit-4.0.tar.gz -C ~/apps
+      cd ~/apps/alamodekit-4.0
+
+  确认你在对的地方 —— 当前目录下应同时看到：
+      alamodekit.py    config/    No.1/  No.2/ ... No.7/
+  看不到就是多进了一层或少进了一层。
+
+--------------------------------------------------------------------------------
+  第 2 步  装 Python 依赖
+--------------------------------------------------------------------------------
+  首选：装到当前用户目录（不需要 root，不影响系统 Python）：
+
+      python3 -m pip install --user -r requirements.txt
+
+  如果上面提示没有 pip，或你确认可以写全局环境，也可以：
+
+      python3 -m pip install -r requirements.txt
+
+  一共 3 个必需包：numpy、matplotlib、pandas；PyYAML 建议装、但不装也能跑
+  （工具包内置纯 Python YAML 兜底解析器）。
+
+  【附注 A】用 --user 装的包，命令一般在 ~/.local/bin，确认它在 PATH：
+      grep -q '\.local/bin' ~/.bashrc || \
+          echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
+
+  【附注 B】目标机器不能上网时（常见于集群），先在能上网的机器下载：
+      pip download -r requirements.txt -d ./wheels
+  把 wheels/ 一起拷过去，离线安装：
+      pip install --no-index --find-links=./wheels -r requirements.txt
+
+  【附注 C】集群上可能要先加载 Python 模块：
+      module load python/3.11
+    注意先 module load，再执行 pip。
+
+--------------------------------------------------------------------------------
+  第 3 步  改配置里那一行（唯一必须手改的地方）
+--------------------------------------------------------------------------------
+      vi config/settings.yaml
+
+  找到这一行（约在第 34 行附近）：
+
+      alamode:
+        bin_dir: /home/username/alamode/alamode/build     ← 出厂占位符，必须改
+
+  改成【存放 alm / anphon / analyze_phonons / dfc2 这四个可执行文件的目录】。
+  不知道在哪就查：
+
+      which alm
+      # 例如输出 /home/heihei123/alamode/build/alm
+      # 那么 bin_dir 就填 /home/heihei123/alamode/build
+
+  ⚠ 忘了改的症状：选 No.5 跑求解器时报 "No such file or directory:
+    /home/username/alamode/..."。
+
+  ⚠ 同一文件里的 alamodekit.base_path 请【保持空字符串别动】，三种安装方式
+    下它都会自动回退到正确目录。
+
+  只用 No.1（生成输入）、No.2（分析绘图，202 除外）、No.6、No.7 这些不调用
+  ALAMODE 可执行文件的功能时，可以暂时不改这一行。
+
+--------------------------------------------------------------------------------
+  第 4 步  体检（别跳过）
+--------------------------------------------------------------------------------
+      python3 check_deploy.py
+
+  它检查 9 项：Python 版本 / 脚本树是否完整 / 菜单注册的 43 个功能是否都能
+  定位到文件 / settings.yaml 实际解析到哪个文件 / ALAMODE 四个二进制 /
+  Python 依赖 / 无头环境 matplotlib 能否真的出图 / MPI / 当前目录是否可写。
+
+  退出码 = 失败项数量，可直接串进脚本：
+      python3 check_deploy.py || echo "部署未完成"
+
+  看到这个才算过：
+      ========================================================================
+        结果：0 项失败，N 项警告
+      ========================================================================
+  （MPI 缺失、系统解释器等只算警告，不影响串行使用。）
+
+  其他参数：
+      python3 check_deploy.py --root /opt/ALAMODEkit --project ~/work/Si
+      python3 check_deploy.py --save deploy.txt        # 存报告，便于求助
+
+--------------------------------------------------------------------------------
+  第 5 步  启动
+--------------------------------------------------------------------------------
+  ⚠ 请先 cd 到你的算例目录再启动。生成的文件（alm.in、*.bands 等）都落在
+    【当前工作目录】，不是落在工具包目录。
+
+      cd ~/work/Si
+      python3 ~/apps/alamodekit-4.0/alamodekit.py
+
+  菜单会出来，按编号选择即可。
+
+  搞不清配置读的哪一份，可以查：
+      python3 -c "import alamodekit_config as c; print(c.get_settings_path())"
+
+--------------------------------------------------------------------------------
+  第 6 步（可选）配一个全局 alamodekit 命令，像敲 vaspkit 一样
+--------------------------------------------------------------------------------
+  目标：在任何目录下只敲一个词
+
+      alamodekit
+
+  就出菜单，不必每次输入那串路径。解压即用模式下，写一个三行包装脚本即可
+  （heredoc 的 EOF 必须顶格，别缩进）：
+
+mkdir -p ~/.local/bin
+cat > ~/.local/bin/alamodekit <<'EOF'
+#!/bin/sh
+exec python3 "$HOME/apps/alamodekit-4.0/alamodekit.py" "$@"
+EOF
+chmod +x ~/.local/bin/alamodekit
+grep -q '\.local/bin' ~/.bashrc || \
+    echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
+
+  然后 source ~/.bashrc，在任意目录敲 alamodekit 即可。
+
+  三处别写错：
+    · 第一行的 python3 必须是【装了 numpy / matplotlib / pandas 的那个
+      解释器】。不确定就把 which python3 的绝对路径写死，例如
+      exec /usr/bin/python3 ...；否则一选功能就报 No module named 'numpy'。
+    · 里面不要加 cd。工具包必须在【你当前所在的算例目录】里启动，生成的
+      文件才会落在那里。
+    · 末尾 "$@" 是把参数原样转交；现在用不到，留着无妨。
+
+  验证（三条都过才算成）：
+      cd /tmp
+      alamodekit                                  # 1) 出菜单，按 q 退出
+      type -a alamodekit                          # 2) 指向你刚放进去的
+      echo $PATH | tr ':' '\n' | grep -c local    # 3) 非 0，说明在 PATH 中
+
+  卸载该命令：rm -f ~/.local/bin/alamodekit（与工具包本体无关）。
+  也可以只写一个临时别名（仅交互式 bash 有效）：
+      echo "alias alamodekit='python3 $HOME/apps/alamodekit-4.0/alamodekit.py'" >> ~/.bashrc
+
+
+================================================================================
+【3】可选：使用虚拟环境（venv / conda）隔离依赖
+================================================================================
+
+  再次强调：虚拟环境【不是必须】。满足以下任一情况时，再考虑使用：
+    · 公共集群，很多人共用一套 Python，你不想动全局环境；
+    · 你同时跑多个需要不同 numpy / matplotlib 版本的 Python 程序；
+    · 担心别人升级依赖后，alamodekit 突然无法运行。
+
+  【方式一】Python 自带 venv：
+
+      python3 -m venv ~/.venvs/alamodekit
+      source ~/.venvs/alamodekit/bin/activate
+      pip install -U pip
+      pip install -r requirements.txt
+
+  【方式二】conda（装了 Anaconda / Miniconda）：
+
+      conda create -n alamodekit python=3.11 -y
+      conda activate alamodekit
+      pip install -r requirements.txt
+
+  集群上通常先加载模块：
+      module load python/3.11
+      python3 -m venv ~/.venvs/alamodekit        # 或 conda create ...
+      source ~/.venvs/alamodekit/bin/activate
+
+  ⚠ 重新登录 / 新开终端后，虚拟环境【不会】自动激活，每次使用前要重新激活：
+      conda activate alamodekit                   # conda 用户
+      source ~/.venvs/alamodekit/bin/activate     # venv 用户
+    激活成功的标志：命令行最前面出现带括号的环境名 (alamodekit)。
+    不激活直接运行会调用系统 Python，报 command not found / ModuleNotFoundError。
+
+  用完退出：
+      conda deactivate                            # conda 用户
+      deactivate                                  # venv 用户
+
+  虚拟环境下想配全局命令，pip 安装（见【4】B/C 模式）会自动生成
+  alamodekit 命令；解压直跑则把【第 2 节第 6 步】包装脚本里的 python3
+  换成 venv 里的绝对路径（如 ~/.venvs/alamodekit/bin/python3）。
+
+
+================================================================================
+【4】三种安装方式，挑一个
+================================================================================
+
+  ┌──────────┬────────────────────┬──────────────────┬──────────────────┐
+  │          │ A 源码直跑（推荐） │ B editable 安装  │ C 常规安装       │
+  ├──────────┼────────────────────┼──────────────────┼──────────────────┤
+  │ 命令     │ python <路径>/     │ pip install -e . │ pip install .    │
+  │          │ alamodekit.py      │ → alamodekit     │ → alamodekit     │
+  │ 需要虚拟 │ 不需要             │ 建议有           │ 建议有           │
+  │ 环境吗   │                    │                  │                  │
+  │ 脚本树   │ 解压目录           │ 解压目录         │ site-packages    │
+  │ 全局命令 │ 按第2节第6步添加   │ 有               │ 有               │
+  │ 升级     │ 换掉整个目录       │ git pull         │ 重新 pip install │
+  │ 适合     │ 共享服务器 / 集群  │ 开发者、单人     │ 只分发一个产物   │
+  └──────────┴────────────────────┴──────────────────┴──────────────────┘
+
+  上面【第 2 节】走的就是 A 模式，也是 vaspkit 式的用法，集群上最常见。
+
+  B 模式（开发者常用）：
+      pip install -e .
+      alamodekit
+
+  C 模式（常规安装到当前 Python 环境）：
+      pip install .
+      alamodekit
+
+  从源码构建分发产物（.tar.gz / .whl）：
+      rm -rf build dist *.egg-info          # ← 必须先清干净，见【6】第 5 条
+      python -m build
+      # 或： python setup.py sdist bdist_wheel
+      ls dist/
+      #   alamodekit-4.0.tar.gz          源码包，在对方机器上现场构建
+      #   alamodekit-4.0-py3-none-any.whl  纯 Python 轮子，Linux/macOS 通用
+
+
+================================================================================
+【5】配置：改哪个文件、从哪找
+================================================================================
+
+  config/settings.yaml 是唯一的配置源。它包含三块：
+    alamode     ——  ALAMODE 二进制的位置与名字
+    alamodekit  ——  工具包自身（base_path 保持空）
+    plotting    ——  所有绘图参数（DPI、线宽、配色、色标、单位、输出格式）
+
+  配置文件查找顺序（alamodekit_config.py 实现，前面的覆盖后面的）：
+
+    1. 环境变量 ALAMODEKIT_CONFIG 指定的路径
+    2. 当前工作目录下的 ./config/settings.yaml
+    3. 当前工作目录下的 ./settings.yaml
+    4. 随包携带的那一份
+
+  ⚠ 是【整体替换】，不是逐项合并。自己放一份就意味着随包那份完全不生效，
+    所以一定要【从随包那份复制出来再改】，不要只写两行。
+
+  多人共用一份只读安装时（共享服务器 / 集群）标准做法：
+
+      # 工具包装在公共只读位置，每个用户在自己的 ~/.bashrc 指定私人配置
+      export ALAMODEKIT_CONFIG=~/.config/alamodekit.yaml
+
+  或者更简单：直接在自己算例目录放一份 settings.yaml。
+
+
+================================================================================
+【6】注意事项（都是实际踩过的坑）
+================================================================================
+
+  1. bin_dir 是占位符，不是依赖
+     出厂值是 /home/username/alamode/alamode/build。它是路径占位符，不代表
+     工具包"绑死了 ALAMODE"。全仓库没有任何一处 import ALAMODE 源码。
+     忘了改 → No.5 报 No such file or directory。
+
+  2. base_path 保持空字符串
+     填了路径反而在"源码直跑 / 常规安装"之间切换时容易错。
+     留空 = 自动用 alamodekit.py 所在目录，三种模式都正确。
+
+  3. 配置文件是整体替换，不是合并
+     见【5】。自己那份要写全，别只写 bin_dir 两行 —— 否则绘图参数会一起
+     回退成内置默认值。
+
+  4. 虚拟环境是可选的，不是强制
+     你完全可以像 vaspkit 一样解压直接用（【第 2 节】）。只有在公共集群上
+     想隔离依赖、或多个 Python 项目版本冲突时，才需要 venv / 独立 conda 环境。
+     无论如何不要用 conda 的 base 环境做共享安装。
+
+  5. 构建分发包前先清空 build/ dist/
+     python setup.py bdist_wheel 会复用 build/bdist.*/wheel，而且只在【成功】
+     结束时才删掉它。一次被中断的构建会把旧载荷留在那里，下一次打出来的
+     wheel 里会静默混入源码树里已经不存在的文件。
+     所以：构建前一定 rm -rf build dist *.egg-info。
+
+  6. 不要动 setup.py / pyproject.toml / MANIFEST.in 里的 packages 与 package_data
+     本工具包是扁平结构，靠 setup.py 里的 packages=[""] + package_dir={"": "."}
+     才能把 No.X 脚本树挂上去。删掉它们，setuptools 会【静默】丢掉全部 44 个
+     脚本（43 个菜单功能，加 1 个被导入的配套绘图模块）且不报错，
+     pip install . 装出来的工具包什么都定位不到。
+     要改打包配置前，先读 CONTRIBUTING.md 的 "Packaging invariants" 一节。
+
+  7. 不要往仓库根目录放草稿脚本
+     根目录被声明为包，所以根目录下【每一个 .py】都会被装进分发包并发给
+     所有用户。
+
+  8. 集群上必须放在共享文件系统
+     $HOME、/public/home/xxx、/work/xxx 都可以。
+     绝对不要放 /tmp、/dev/shm 或节点本地盘 —— 计算节点看不见它们。
+
+  9. 不要在登录节点跑并行
+     No.5/502 会调用 mpirun。在登录节点起 MPI 进程容易被管理员警告甚至封号。
+     正确做法：用 No.6/603 生成 SLURM / PBS 提交脚本，交给调度器运行。
+
+ 10. 计算节点没有图形界面
+     需要时显式设一下，可以写进 ~/.bashrc：
+         export MPLBACKEND=Agg
+
+ 11. module load 属于运行时选择，不写进配置
+     No.5/501 与 No.5/502 可以在调用二进制前拼一行 module load，这个选择
+     每次运行时决定，settings.yaml 里没有对应字段。
+
+ 12. 换机器 / 升级时的正确处理
+     升级：A 模式换掉整个目录；B 模式 git pull；C 模式重新 pip install。
+     卸载：删掉目录、（如有）删掉虚拟环境、删掉自己加的全局命令：
+       rm -f ~/.local/bin/alamodekit
+
+ 13. 遇到问题请附上这三样再求助
+         python3 check_deploy.py --save deploy.txt && cat deploy.txt
+         python3 -c "import alamodekit_config as c; print(c.get_settings_path())"
+         完整的报错回溯 + 涉及的输入文件
+     这一组信息能一次性覆盖解释器、依赖、配置解析、二进制位置四个方面。
+
+
+================================================================================
+【7】常见报错对照表
+================================================================================
+
+  现象                              原因 / 处理
+  ────────────────────────────────  ──────────────────────────────────────────────────
+  ModuleNotFoundError:              1.5.0 之前的缺陷，本版已修。若仍然出现，说明某个
+  No module named 'alamodekit_io'   子程序缺少 sys.path 自举块，见 CONTRIBUTING.md 的
+                                    Code style 一节。
+
+  No such file or directory:        bin_dir 还是出厂占位符。见【第 2 节第 3 步】。
+  /home/username/alamode/...
+
+  ERROR: alm executable not found   bin_dir 指错了目录。它要指向【放着可执行文件的目录】，
+                                    而不是可执行文件本身。
+
+  command not found: alamodekit     若用了虚拟环境，多半是环境没有激活（重新登录后最
+  （或 No module named '...'）      常见）：看命令行开头有没有 (alamodekit)，没有就
+                                    conda activate alamodekit（venv 用户 source
+                                    ~/.venvs/alamodekit/bin/activate）。见【第 3 节】。
+                                    若没用虚拟环境，检查 ~/.local/bin 是否在 PATH。
+
+  No module named 'numpy'           依赖没装；或用了虚拟环境但没激活。见【第 2 节
+  (或 matplotlib / pandas)          第 2 步】、【第 3 节】。
+
+  FileNotFoundError: settings.yaml  候选位置都没找到。多半是 ALAMODEKIT_CONFIG 指向
+                                    了不存在的路径。
+
+  ERROR: Script not found!          启动器不在工具包根目录。改用绝对路径启动：python3
+                                    ~/apps/alamodekit-4.0/alamodekit.py
+
+  no display name / 出图报错        计算节点没有图形界面。设置 export MPLBACKEND=Agg
+
+  python3: command not found        系统没装 Python 3。module load python/3.x，或请
+                                    管理员安装。
+
+  选完功能后菜单报错，看不出原因    先跑 check_deploy.py，它会逐条指出缺哪一项。
+
+
+================================================================================
+【8】验收建议：第一次部署后先做一次端到端冒烟
+================================================================================
+
+  在任意空目录里：
+
+      mkdir -p /tmp/smoke && cd /tmp/smoke
+      printf 'Cu\n1.0\n3.615 0.0 0.0\n0.0 3.615 0.0\n0.0 0.0 3.615\n' > SPOSCAR
+      printf 'Cu\n1\nDirect\n0.0 0.0 0.0\n' >> SPOSCAR
+      python3 ~/apps/alamodekit-4.0/alamodekit.py
+      # 依次选 1 → 101 → 1，问 y/n 时答 y
+      ls
+      # 应该出现 alm.in
+
+  看到 alm.in 就说明：菜单成功派发了子程序、公共模块 import 成功、文件写进了
+  你自己的目录 —— 部署可用。
+
+  正式使用前，建议再拿一个小体系走完一遍完整链路：
+      No.1 生成输入 → No.5 跑求解器 → No.2 分析绘图
+  这一步会真正用到你编译的 ALAMODE 可执行文件。
+
+
+================================================================================
+【9】关于本文档 / 版本说明
+================================================================================
+
+  文档地图（避免重复阅读）：
+    INSTALL.txt      本文件。中文，给人看的"照着敲"版：安装、配置、注意事项、报错表。
+    INSTALL_EN.txt   本文件的英文版，逐节对应（给不看中文的人）。
+    README.md        英文，项目概览：功能清单、目录结构、菜单布局、典型工作流。
+    DEPLOYMENT.md    英文，部署详解：三种安装模式的横向对比、配置查找顺序的原理、
+                     分发给第三方、实际踩过的打包坑。内容与本文档互补，非重复。
+    CONTRIBUTING.md  英文，给改代码的人：开发环境、代码风格、打包硬约束、CI 说明。
+    CHANGELOG.md     英文，版本变更记录。
+
+  当前版本的诚实评估：
+
+    已经实测通过的：
+      · 菜单注册的 43 个功能，每一个都能在磁盘上定位到脚本文件
+      · pip install . 会把 44 个脚本全部装进 site-packages
+        （1.5.0 之前是 0 个 —— 这是最致命的打包缺陷，已修）
+      · 子程序"点一下就 ModuleNotFoundError"的问题已修好
+      · 三种安装方式在全新环境中实测通过；解压即可在系统 Python 下直接运行
+      · sdist 自包含；从 sdist 重建 wheel 仍得到完整的 44 个脚本
+      · 自带一键体检脚本 check_deploy.py
+
+    尚未验证的（请心里有数）：
+      · 没有在真实 Linux / 真实集群上跑过。上述实测是在 Windows + 托管 Python
+        上完成的；module load、mpirun、SLURM 提交脚本只验证了逻辑
+      · 没有接过真实的 ALAMODE 可执行文件跑通一次完整流程。run_alm / run_anphon
+        只负责把命令拼好发出去，alm / anphon 实际输出结果的解析没有在真机上核对
+      · CI 配置写好了但从未执行过（还没有远程仓库）
+
+    结论：作为"能装、能启动、不会一上手就崩"的软件 —— 可以部署了。
+          作为"经过真实环境验证的生产工具" —— 第一次使用请当作实机联调，
+          而不是直接投产。
+
+================================================================================

@@ -7,8 +7,9 @@ alamodekit.py
 Top-level interactive launcher for the ALAMODEkit toolkit.
 
 The launcher presents a three-level menu (main -> submenu -> function), shows
-the required input files for the chosen function, asks for confirmation, and
-then runs the target script as a subprocess. The base install path is read
+the required input files for the chosen function, and then runs the target
+script as a subprocess without an extra confirmation prompt. The base install
+path is read
 from ``config/settings.yaml`` so the toolkit is relocatable without editing
 this file.
 
@@ -278,48 +279,54 @@ SCRIPT_PATHS = build_script_paths()
 # ---------------------------------------------------------------------------
 # Menu rendering.
 # ---------------------------------------------------------------------------
+# All menu/separator rules use one fixed width so the box lines line up.
+MENU_WIDTH = 60
+
+
+def _rule() -> str:
+    """A full-width '=' separator line."""
+    return "=" * MENU_WIDTH
+
+
+def _title_rule(title: str) -> str:
+    """A full-width '=' line with ``title`` centred on it."""
+    return f" {title} ".center(MENU_WIDTH, "=")
+
+
 def display_level1() -> None:
-    menu = "\n========================== ALAMODEkit MAIN MENU ==========================\n"
+    menu = "\n" + _title_rule("ALAMODEkit MAIN MENU") + "\n"
     for k, v in HIERARCHICAL_SCRIPTS.items():
         menu += f"  [{k}] {v['name']}\n"
-    menu += "\n[q] Quit\n======================================================================\n"
+    menu += "\n[q] Quit\n" + _rule() + "\n"
     print(menu)
 
 
 def display_level2(l1: str) -> None:
     data = HIERARCHICAL_SCRIPTS[l1]
-    menu = f"\n========================== {data['name']} ==========================\n"
+    menu = "\n" + _title_rule(data['name']) + "\n"
     for k, v in data["submenus"].items():
         menu += f"  [{k}] {v['name']}\n"
-    menu += "\n[b] Back | [q] Quit\n======================================================================\n"
+    menu += "\n[b] Back | [q] Quit\n" + _rule() + "\n"
     print(menu)
 
 
 def display_level3(l1: str, l2: str) -> None:
     data = HIERARCHICAL_SCRIPTS[l1]["submenus"][l2]
-    menu = f"\n========================== {data['name']} ==========================\n"
+    menu = "\n" + _title_rule(data['name']) + "\n"
     for k, v in data["functions"].items():
         menu += f"  [{k}] {v['desc']}\n"
-    menu += "\n[b] Back | [q] Quit\n======================================================================\n"
+    menu += "\n[b] Back | [q] Quit\n" + _rule() + "\n"
     print(menu)
 
 
-def show_info_and_confirm(func_id: str) -> bool:
-    """Show the required files for ``func_id`` and ask whether to proceed."""
+def show_required_files(func_id: str) -> None:
+    """Print the files that must exist in the working directory before run."""
     info = SCRIPT_PATHS[func_id]
-    print("\n" + "=" * 60)
+    print("\n" + _rule())
     print("REQUIRED FILES (MUST EXIST IN CURRENT DIRECTORY):")
     for f in info["required"]:
         print(f"  - {f}")
-    print("=" * 60)
-    while True:
-        choice = input("\nProceed to execute? (y/n): ").strip().lower()
-        if choice == "y":
-            return True
-        if choice == "n":
-            print("Execution canceled. Exiting program...")
-            return False
-        print("Invalid input! Enter 'y' or 'n'.")
+    print(_rule())
 
 
 def execute_script(func_id: str) -> None:
@@ -336,7 +343,24 @@ def execute_script(func_id: str) -> None:
     print("-" * 50)
     try:
         # Run the script interactively in the foreground so it can prompt.
-        subprocess.run([sys.executable, path], check=True, text=True)
+        #
+        # The child is launched as ``python <absolute script path>``, which
+        # makes ``sys.path[0]`` the script's own folder (No.X/<submenu>/) and
+        # NOT the toolkit root. Shared modules such as ``alamodekit_io`` would
+        # then fail to import in every subprogram that predates the sys.path
+        # bootstrap convention. Export the root(s) on PYTHONPATH so the child
+        # resolves them regardless of the working directory, and so the menu
+        # keeps working even if one script's bootstrap is missing.
+        roots: list = []
+        for candidate in (os.path.dirname(os.path.abspath(__file__)), BASE_PATH):
+            candidate = os.path.abspath(candidate)
+            if candidate not in roots:
+                roots.append(candidate)
+        env = os.environ.copy()
+        inherited = env.get("PYTHONPATH", "")
+        env["PYTHONPATH"] = os.pathsep.join(
+            roots + ([inherited] if inherited else []))
+        subprocess.run([sys.executable, path], check=True, text=True, env=env)
         print("-" * 50)
         print("SUCCESS: Script executed successfully!")
     except subprocess.CalledProcessError as exc:
@@ -380,9 +404,9 @@ def main():
                 level = 2
             elif ipt in HIERARCHICAL_SCRIPTS[l1]["submenus"][l2]["functions"]:
                 func_id = HIERARCHICAL_SCRIPTS[l1]["submenus"][l2]["functions"][ipt]["id"]
-                if show_info_and_confirm(func_id):
-                    execute_script(func_id)
-                    return
+                show_required_files(func_id)
+                execute_script(func_id)
+                return
             continue
 
 

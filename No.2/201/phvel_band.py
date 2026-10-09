@@ -23,9 +23,20 @@ colorbar, axis units, output formats) come from ``config/settings.yaml``.
 from __future__ import annotations
 
 import os
+import sys
 
-import alamodekit_io
-alamodekit_io.ensure_package_root()
+# --- Bootstrap: make the toolkit root importable when run as a script. ---
+# When this file is executed directly, sys.path[0] is this script's own
+# folder (No.X/<submenu>/), which does NOT contain the toolkit modules.
+# Add the package root (two levels up) to sys.path *before* importing
+# anything toolkit-level. Harmless when imported as a package module.
+_HERE = os.path.dirname(os.path.abspath(__file__))
+_ROOT = os.path.abspath(os.path.join(_HERE, os.pardir, os.pardir))
+if _ROOT not in sys.path:
+    sys.path.insert(0, _ROOT)
+
+import alamodekit_io  # noqa: E402
+alamodekit_io.ensure_package_root()  # noqa: E402
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -153,10 +164,8 @@ def main():
         read_bands_and_phvel(prefix)
     write_merged_data(prefix, kpoints, frequencies, velocities)
 
-    if alamodekit_io.ask_yes_no(
-            "Plot the dispersion with group-velocity projection?"):
-        plot_velocity_projection(kpoints, frequencies, velocities,
-                                 tick_values, tick_labels, prefix)
+    plot_velocity_projection(kpoints, frequencies, velocities,
+                             tick_values, tick_labels, prefix)
 
 
 if __name__ == '__main__':

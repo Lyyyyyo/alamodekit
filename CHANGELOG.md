@@ -6,7 +6,113 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [4.0] — 2026-10-08
+
 ### Fixed
+- **ANPHON input generators no longer emit an `&interaction` block.** The
+  four ANPHON input scripts (`pre_scph.py`, `pre_cal_k.py`, `pre_harphband.py`,
+  `pre_harphdos.py` under No.1/102) mistakenly wrote an ALM-only
+  `&interaction` / `NORDER = 1` namelist. ANPHON has no such namelist; the
+  force-constant expansion order is carried by FCSXML/FC2XML, so the block is
+  now omitted. The four ALM scripts under No.1/101 correctly keep it.
+
+### Changed
+- Package version bumped to **4.0** (author-assigned release number); the
+  toolkit content is otherwise 1.5.1 plus the ANPHON fix above.
+- **Unified on-screen rule width.** Every `====` menu banner and separator
+  line now uses a fixed 60-character width, with the title centred on the
+  rule. Previously the main-menu title/footer and the per-script
+  banners/separators were mixed across 40/50/60/72 characters and looked
+  uneven. (The reST title underlines inside module docstrings are unchanged.)
+- **Removed redundant execution confirmations.** Choosing a function now runs
+  it immediately after the REQUIRED FILES are listed; the
+  "Proceed to execute? (y/n)" prompt is gone. The batch FORCE_CONSTANTS tool
+  no longer asks "Use this path?" or "Start processing?" — it uses the
+  resolved `convert_fc2.py` path and starts directly.
+- **Plots are produced automatically.** The plotting steps in `APR_band`,
+  `gru_band`, `ALMcv_result`, `phvel_band`, and `analyze_phonons` no longer
+  ask a post-computation "Plot ...? (y/n)" question; they draw the figure as
+  soon as the data are ready. On a headless node `plt.show()` still needs X
+  forwarding/a display (no image file is written).
+- The `run_anphon` "Run with MPI?" prompt is intentionally kept, together with
+  every genuine parameter, file-number, and menu input: it selects serial vs.
+  `mpirun -np N` execution and is a real runtime option, not a confirmation.
+- **Author attribution and repository metadata.** The MIT `LICENSE` copyright
+  line and the package metadata now name the authors (刘欣 / Xin Liu and
+  刘宇佳 / Yujia Liu, Liu Group, State Key Laboratory of New Textile Materials
+  and Advanced Processing Technologies, Wuhan Textile University), and
+  `setup.py`, `pyproject.toml` and the README point at the GitHub repository.
+
+## [1.5.1] — 2026-09-23
+
+### Added
+- **Shared-layer pytest suite (`tests/`)** — 36 tests covering the four
+  shared modules: the pure-Python YAML fallback parser and the settings
+  search order (`alamodekit_config`); high-symmetry label parsing/merging
+  and the `.bands` reader (`alamodekit_io`); POSCAR/KPATH/namelist helpers
+  (`alamode_input`); custom colormap anchors and rcParams (`plot_style`).
+  Run with `python -m pytest tests/`. pytest is a development-only
+  dependency and is not added to the runtime requirements.
+- **`DEPLOYMENT.md`** — a deployment guide for installing the toolkit on a
+  machine that is not the developer's: prerequisites, the three install modes
+  and when each is appropriate, distributing a tarball/wheel, the per-user
+  configuration pattern for a shared server or cluster (the `settings.yaml`
+  search order), verification, and the traps listed below.
+- **`check_deploy.py`** — post-deployment health check. Verifies the
+  interpreter, the script tree, that all 43 menu entries resolve to real files,
+  which `settings.yaml` is in use, every ALAMODE binary, the Python
+  dependencies, a headless matplotlib smoke test, MPI, and that the working
+  directory is writable. Exit status is the number of failures, so it can gate
+  a deployment script. Standard-library-only at import time, and it works both
+  from the source tree and from the copy installed into `site-packages`.
+- **`INSTALL.txt` and `INSTALL_EN.txt`** — a plain-text installation walkthrough
+  in Chinese and English (the same document section by section): prerequisites,
+  the six-step deployment path, the three install modes, the configuration
+  lookup order, thirteen caveats that have actually bitten this project, and a
+  symptom-to-fix table. Aimed at whoever installs the toolkit on a machine that
+  is not the developer's.
+- **A "global command" step in both INSTALL documents.** Step 7 (optional)
+  documents the three ways to get a bare `alamodekit` command instead of typing
+  `python3 .../alamodekit.py`: the entry point pip already generates (modes B
+  and C), a three-line wrapper script in `~/.local/bin` for a source install
+  (modes A and clusters), and a shell alias for quick personal use — with the
+  failure mode of each, what to verify, and the rule that `alamodekit.py` must
+  not be symlinked or moved on its own. Verified on a fresh `pip install .`:
+  the command is created, it works from an unrelated directory, it dispatches
+  a subprogram from there, and all 44 scripts under No.X (43 menu functions
+  plus 1 imported plotting companion) plus the five shared modules and
+  `config/settings.yaml` are present in `site-packages`.
+- `MANIFEST.in` now also ships `CONTRIBUTING.md`, `DEPLOYMENT.md`,
+  `INSTALL.txt` and `INSTALL_EN.txt`.
+
+### Fixed
+- **`run_alm.py` output-scan cleanup.** Removed an unused `base` variable
+  and replaced five separate `os.listdir(".")` passes (one per suffix) with
+  a single directory scan matched against a suffix tuple.
+- **Documentation count wording unified.** README, DEPLOYMENT, both INSTALL
+  documents and CHANGELOG now consistently distinguish the **43 menu
+  functions** from the **44 on-disk scripts** — the extra one,
+  `plot_analyze_phonons.py`, is an imported plotting companion, not a menu
+  entry.
+- **Fallback YAML parser now strips a UTF-8 BOM.** A `settings.yaml` saved by
+  Windows Notepad starts with a BOM, which the pure-Python fallback (used when
+  PyYAML is absent) treated as part of the first key, silently dropping the
+  whole `alamode` section. `.gitignore` now also ignores `.pytest_cache/`.
+- **Subprograms can be run standalone again.** 21 of the 44 scripts under No.X
+  (`No.1`, `No.3`, `No.5` and most of `No.2`) imported `alamodekit_io` without
+  first putting the toolkit root on `sys.path`. The menu launches them as
+  `python <root>/No.X/<submenu>/<script>.py`, so `sys.path[0]` is the script's
+  own folder; every one of them died with
+
+      ModuleNotFoundError: No module named 'alamodekit_io'
+
+  They now carry the same bootstrap block the `No.6`/`No.7` scripts already
+  used. (The root cause was a documentation gap: `CONTRIBUTING.md` said a
+  subprogram only needed `ensure_package_root()`, which cannot work, because
+  the `import` on the line above it fails first.)
+- `alamodekit.py` exports the toolkit root and `BASE_PATH` on `PYTHONPATH` for
+  every subprocess it launches, so the menu no longer depends on each script
+  having a correct bootstrap.
 - **The wheel now actually carries the toolkit.** `package_data` was declared
   but no package was, so setuptools silently dropped the whole `No.X` script
   tree *and* `config/settings.yaml` from the wheel: `pip install .` produced an
@@ -27,6 +133,20 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - CI builds a wheel and asserts its payload contains every subprogram plus
   `config/settings.yaml` — the regression this release fixes went unnoticed
   precisely because every other CI step runs from the source tree.
+- The README installation section now describes all three install modes, warns
+  against installing into the system Python, and points at `DEPLOYMENT.md` for
+  anything beyond a single-user machine. The previous text told the reader to
+  `git clone https://github.com/<your-username>/ALAMODEkit.git`, a placeholder
+  URL that resolves nowhere.
+- Both INSTALL documents were restructured around a **vaspkit-style "unpack and
+  run"** route, which is now the default and needs **no virtual environment**
+  (dependencies install with `python3 -m pip install --user`). Virtual
+  environments (venv / conda, including re-activation after every re-login and
+  the `(alamodekit)` prompt marker) were moved into an optional section with
+  guidance on when they actually help (shared clusters, conflicting Python
+  projects). The install-modes table, caveats and the error table were updated
+  to match — answering the common question "why can't this just work like
+  vaspkit?".
 
 ## [1.5.0] — Linux: phonon vibration visualisation (No.7/706) + source audit
 

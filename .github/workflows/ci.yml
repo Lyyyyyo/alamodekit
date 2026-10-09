@@ -30,11 +30,15 @@ jobs:
       - name: Install runtime dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install numpy matplotlib pandas PyYAML
+          pip install numpy matplotlib pandas PyYAML pytest
 
       - name: Byte-compile every script (syntax check)
         run: |
           find . -name "*.py" -print0 | xargs -0 -n1 python -m py_compile
+
+      - name: Run the shared-layer pytest suite
+        run: |
+          python -m pytest tests/ -v
 
       - name: Smoke-test the config loader
         run: |
@@ -69,6 +73,70 @@ jobs:
           assert 'config/settings.yaml' in names, 'wheel is missing config/settings.yaml'
           assert 'alamodekit.py' in names and 'plot_style.py' in names, 'wheel is missing a top-level module'
           print(f'wheel payload OK: {len(got)} subprograms + config/settings.yaml')
+          PY
+
+      # The step above only proves the FILES are in the wheel. This one proves
+      # the installed LAYOUT runs: after `pip install .` the launcher falls back
+      # to the directory holding alamodekit.py -- site-packages -- so the No.X
+      # tree and config/settings.yaml must be there and resolvable, and the
+      # menu must start from an unrelated working directory. That is exactly the
+      # path a colleague takes on a fresh machine, and nothing else in CI
+      # exercises it.
+      - name: Guard the installed layout
+        run: |
+          pip install --no-deps --force-reinstall /tmp/whl/*.whl
+          python -c "import alamodekit, os; p=os.path.dirname(alamodekit.__file__); print('installed to', p); assert os.path.isdir(os.path.join(p, 'No.1')), 'the No.X script tree was not installed'; assert os.path.isfile(os.path.join(p, 'config', 'settings.yaml')), 'config/settings.yaml was not installed'"
+          mkdir -p /tmp/neutral && cd /tmp/neutral
+          printf 'q\n' | python -m alamodekit > /tmp/menu.txt
+          grep -q "MAIN MENU" /tmp/menu.txt
+          echo "installed layout OK"
+
+      # Regression guard for the deployment health check itself. bin_dir in the
+      # repository is deliberately still the factory placeholder, so point
+      # ALAMODEKIT_CONFIG at a throwaway config with stub binaries and require a
+      # clean exit. This transitively asserts that the script tree is complete,
+      # that all registered menu entries resolve to real files, that the config
+      # loader works, that every runtime dependency imports, and that matplotlib
+      # can draw on a headless machine.
+      - name: Guard the deployment check
+        run: |
+          mkdir -p /tmp/fakebin
+          for b in alm anphon analyze_phonons dfc2; do
+            printf '#!/bin/sh\nexit 0\n' > "/tmp/fakebin/$b"
+            chmod +x "/tmp/fakebin/$b"
+          done
+          printf 'alamode:\n  bin_dir: /tmp/fakebin\nplotting:\n  dpi: 300\n' > /tmp/ci_settings.yaml
+          ALAMODEKIT_CONFIG=/tmp/ci_settings.yaml MPLBACKEND=Agg python check_deploy.py
+
+      # Regression guard. The menu launches a subprogram as
+      # `python <root>/No.X/<submenu>/<script>.py`, so sys.path[0] is the
+      # script's own folder -- NOT the toolkit root. A subprogram that imports
+      # alamodekit_io without first putting the root on sys.path dies with
+      # ModuleNotFoundError as soon as a user picks it from the menu.
+      # 21 of 44 shipped that way because CI only ever exercised the source tree
+      # (and only the No.6/No.7 subprograms, which happened to be correct).
+      - name: Guard the subprogram bootstrap
+        run: |
+          python - <<'PY'
+          import glob
+          import re
+
+          bad = []
+          for path in sorted(glob.glob('No.*/*/*.py')):
+              lines = open(path, encoding='utf-8').read().splitlines()
+              imp = next((i for i, l in enumerate(lines)
+                          if re.match(r'\s*import\s+alamodekit_io\b', l)), None)
+              if imp is None:
+                  continue  # this subprogram does not use the toolkit modules
+              ins = next((i for i, l in enumerate(lines)
+                          if 'sys.path.insert' in l), None)
+              if ins is None or ins > imp:
+                  bad.append(path)
+
+          assert not bad, (
+              'subprogram(s) import alamodekit_io before putting the toolkit '
+              f'root on sys.path: {bad}')
+          print('bootstrap OK: every toolkit-importing subprogram bootstraps sys.path')
           PY
 
       - name: Smoke-test the pure-Python helpers (No.6)

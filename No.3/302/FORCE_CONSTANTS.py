@@ -25,8 +25,18 @@ import re
 import sys
 import subprocess
 
-import alamodekit_io
-alamodekit_io.ensure_package_root()
+# --- Bootstrap: make the toolkit root importable when run as a script. ---
+# When this file is executed directly, sys.path[0] is this script's own
+# folder (No.X/<submenu>/), which does NOT contain the toolkit modules.
+# Add the package root (two levels up) to sys.path *before* importing
+# anything toolkit-level. Harmless when imported as a package module.
+_HERE = os.path.dirname(os.path.abspath(__file__))
+_ROOT = os.path.abspath(os.path.join(_HERE, os.pardir, os.pardir))
+if _ROOT not in sys.path:
+    sys.path.insert(0, _ROOT)
+
+import alamodekit_io  # noqa: E402
+alamodekit_io.ensure_package_root()  # noqa: E402
 
 from alamodekit_config import get_alamode_bin, get_config_value
 
@@ -35,14 +45,10 @@ FILE_PATTERN = r"^scpb_(\d+)K\.xml$"
 
 
 def get_convert_script_path(default_path: str) -> str:
-    """Ask whether to use the resolved path or a custom convert_fc2.py path."""
-    print("\n===== Convert script path setup =====")
-    print(f"Resolved path: {default_path}")
-    choice = input("Use this path? [Y/n]: ").strip().lower()
-    if choice in ("", "y", "yes"):
-        return default_path
-    custom = input("Enter your custom path to convert_fc2.py: ").strip()
-    return os.path.expanduser(custom)
+    """Report the resolved convert_fc2.py path and use it directly."""
+    print("\n" + " Convert script path setup ".center(60, "="))
+    print(f"Using convert script: {default_path}")
+    return default_path
 
 
 def find_target_files() -> list:
@@ -57,7 +63,7 @@ def find_target_files() -> list:
 
 
 def main():
-    print("===== BATCH FORCE_CONSTANTS CONVERTER =====")
+    print(" BATCH FORCE_CONSTANTS CONVERTER ".center(60, "="))
     print("Auto-process scpb_*K.xml -> rename the output file\n")
 
     # The convert_fc2.py script is resolved via the alamode binaries config.
@@ -83,11 +89,6 @@ def main():
     print(f"\nFound {len(target_files)} files to process:")
     for name, temp in target_files:
         print(f"  - {name} (temperature: {temp} K)")
-
-    confirm = input("\nStart processing? [Y/n]: ").strip().lower()
-    if confirm not in ("", "y", "yes"):
-        print("Processing cancelled by user.")
-        return
 
     print("\n----------------------------------------")
     print("Starting batch conversion...")
@@ -120,12 +121,12 @@ def main():
             print(f"Unexpected error: {exc}\n")
             fail_count += 1
 
-    print("=" * 40)
+    print("=" * 60)
     print("Processing completed!")
     print(f"Successful files: {success_count}")
     print(f"Failed files: {fail_count}")
     print("All output files: FORCE_CONSTANTS_2ND_*K")
-    print("=" * 40)
+    print("=" * 60)
 
 
 if __name__ == "__main__":

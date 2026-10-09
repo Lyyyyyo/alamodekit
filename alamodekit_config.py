@@ -64,6 +64,11 @@ def _fallback_yaml_load(text: str) -> dict:
     lookahead: a key whose first child line begins with ``-`` becomes a list,
     otherwise it becomes a mapping.
     """
+    # Strip a UTF-8 BOM (e.g. settings.yaml saved by Windows Notepad);
+    # otherwise it becomes part of the first key and breaks every lookup.
+    if text.startswith("\ufeff"):
+        text = text[1:]
+
     def _coerce(raw: str) -> Any:
         raw = raw.strip()
         if (raw.startswith('"') and raw.endswith('"')) or \

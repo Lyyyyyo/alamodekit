@@ -27,10 +27,21 @@ Outputs
 from __future__ import annotations
 
 import os
+import sys
 import re
 
-import alamodekit_io
-alamodekit_io.ensure_package_root()
+# --- Bootstrap: make the toolkit root importable when run as a script. ---
+# When this file is executed directly, sys.path[0] is this script's own
+# folder (No.X/<submenu>/), which does NOT contain the toolkit modules.
+# Add the package root (two levels up) to sys.path *before* importing
+# anything toolkit-level. Harmless when imported as a package module.
+_HERE = os.path.dirname(os.path.abspath(__file__))
+_ROOT = os.path.abspath(os.path.join(_HERE, os.pardir, os.pardir))
+if _ROOT not in sys.path:
+    sys.path.insert(0, _ROOT)
+
+import alamodekit_io  # noqa: E402
+alamodekit_io.ensure_package_root()  # noqa: E402
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -175,10 +186,8 @@ def main():
     out_file = f"{prefix}_gruneisen_combined.txt"
     combined, nk, nb = combine_and_save(k_gamma, gamma, k_freq, freq, out_file)
 
-    if alamodekit_io.ask_yes_no(
-            "Plot the Gruneisen-parameter-projected dispersion?"):
-        plot_gruneisen(combined, nk, nb, tick_values, tick_labels,
-                       f"{prefix}_gruneisen_projected_dispersion")
+    plot_gruneisen(combined, nk, nb, tick_values, tick_labels,
+                   f"{prefix}_gruneisen_projected_dispersion")
     print("\nAll operations completed!")
 
 

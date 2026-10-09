@@ -155,7 +155,7 @@ def main(argv=None):
     # Sanity check: the DOS integral should equal 3*N (number of modes).
     dos_integral = float(np.trapz(dos, freq))
 
-    print("=" * 72)
+    print("=" * 60)
     print(f"File: {args.file}")
     print(f"DOS integral (should be ~3*N modes): {dos_integral:.4f}")
     print(f"Zero-point energy: {zpe_mev:.4f} meV/cell  ({zpe_mol:.4f} kJ/mol)")
@@ -165,7 +165,7 @@ def main(argv=None):
     for i, T in enumerate(temps):
         print(f"{T:7.1f} {U_mol[i]:12.4f} {F_mol[i]:12.4f} "
               f"{S_mol[i]:12.4f} {Cv_mol[i]:12.4f}")
-    print("=" * 72)
+    print("=" * 60)
 
     # CSV output.
     base = os.path.splitext(args.file)[0]

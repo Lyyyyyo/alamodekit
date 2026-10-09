@@ -24,11 +24,22 @@ the element palette, line width, DPI, output formats and axis units.
 from __future__ import annotations
 
 import os
+import sys
 import re
 from io import StringIO
 
-import alamodekit_io
-alamodekit_io.ensure_package_root()
+# --- Bootstrap: make the toolkit root importable when run as a script. ---
+# When this file is executed directly, sys.path[0] is this script's own
+# folder (No.X/<submenu>/), which does NOT contain the toolkit modules.
+# Add the package root (two levels up) to sys.path *before* importing
+# anything toolkit-level. Harmless when imported as a package module.
+_HERE = os.path.dirname(os.path.abspath(__file__))
+_ROOT = os.path.abspath(os.path.join(_HERE, os.pardir, os.pardir))
+if _ROOT not in sys.path:
+    sys.path.insert(0, _ROOT)
+
+import alamodekit_io  # noqa: E402
+alamodekit_io.ensure_package_root()  # noqa: E402
 
 import numpy as np
 import pandas as pd
@@ -37,7 +48,7 @@ from matplotlib.collections import LineCollection
 from matplotlib.patches import Polygon
 from matplotlib.path import Path
 
-from alamodekit_io import prompt_prefix, ask_yes_no
+from alamodekit_io import prompt_prefix
 from plot_style import (apply_plot_style, save_figure, make_figure,
                         get_line_setting, get_high_sym_line_style,
                         get_palette, apply_grid)
@@ -280,10 +291,7 @@ def main():
     merged, grouped = load_apr_data(prefix)
     write_merged_table(merged, prefix)
 
-    if not ask_yes_no("\nPlot the element-projected phonon dispersion?"):
-        print("Script execution finished.")
-        return
-
+    # Plot the element-projected phonon dispersion automatically.
     # High-symmetry ticks from the .bands header.
     with open(f"{prefix}.bands", 'r', encoding='utf-8') as handle:
         head = handle.readlines()[:2]

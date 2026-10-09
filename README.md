@@ -1,5 +1,8 @@
 # ALAMODEkit — Linux CLI edition
 
+[![CI](https://github.com/Lyyyyyo/alamodekit/actions/workflows/ci.yml/badge.svg)](https://github.com/Lyyyyyo/alamodekit/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 **Advanced ALAMODE Toolkit (Linux / command-line edition)** — an interactive,
 menu-driven toolkit that drives the full ALAMODE workflow from the terminal:
 
@@ -19,7 +22,8 @@ dependency) is available for desktop post-processing analysis.
 
 ## ✨ Features
 
-- **Three-level interactive menu** dispatching to **43** subprograms across
+- **Three-level interactive menu** dispatching to **43** menu functions
+  (44 on-disk scripts, including 1 imported plotting companion) across
   7 categories: input generation, analysis & plotting, force-constant
   processing, ShengBTE integration, solver running, pure-Python helpers,
   and external interfaces & thermodynamics.
@@ -40,6 +44,9 @@ dependency) is available for desktop post-processing analysis.
   `setup.py` / `pyproject.toml` / `requirements.txt`), and the config loader
   additionally ships a built-in pure-Python fallback parser so the toolkit
   still starts where PyYAML cannot be installed.
+- **Automated test suite** (`tests/`, pytest): 36 unit tests guard the four
+  shared modules (config loading, output parsing, namelist generation, plot
+  styling) and run in CI on every push.
 
 ---
 
@@ -81,8 +88,18 @@ alamodekit_linux/
 │   ├── 704/  ASE bridge                ase_bridge (space group / primitive / ...)
 │   ├── 705/  spectral thermal kappa    kappa_spec (.kl_spec)
 │   └── 706/  vibration visualisation   vib_vesta (.evec -> .axsf for VESTA)
+├── check_deploy.py          # post-deployment health check (python check_deploy.py)
+├── tests/                   # pytest suite for the shared modules (36 unit tests)
+│   ├── conftest.py           # bootstrap: sys.path + headless Agg backend
+│   ├── test_config_loader.py # config loader + fallback YAML parser
+│   ├── test_io_helpers.py    # bands/DOS/POSCAR parsing, label merging
+│   ├── test_input_helpers.py # ALM/ANPHON namelist generation
+│   └── test_plot_style.py    # rcParams + custom colormaps
 ├── setup.py, pyproject.toml, requirements.txt, MANIFEST.in
 ├── LICENSE, .gitignore, CHANGELOG.md, CONTRIBUTING.md
+├── DEPLOYMENT.md            # how to install this on another machine
+├── INSTALL_EN.txt           # plain-text install walkthrough (English)
+├── INSTALL.txt              # the same walkthrough in Chinese
 └── .github/ (CI workflow, issue/PR templates)
 ```
 
@@ -90,28 +107,81 @@ alamodekit_linux/
 
 ## 🚀 Installation
 
+> **Deploying this on somebody else's machine?** Follow
+> **[DEPLOYMENT.md](DEPLOYMENT.md)** — it covers the three install modes, the
+> per-user configuration pattern for shared servers and clusters, and a
+> one-command health check. The short version is below.
+>
+> Prefer a single plain-text walkthrough? **`INSTALL_EN.txt`** (English) and
+> **`INSTALL.txt`** (Chinese) hold the same six-step procedure, the caveats that
+> have actually bitten this project, and an error-to-fix table.
+
 ### Prerequisites
 - Python ≥ 3.8
 - A working **compiled** ALAMODE build (`alm`, `anphon`, `analyze_phonons`,
   `dfc2`). The toolkit calls these binaries; it does not need the ALAMODE
   Python sources.
 - (Optional) ShengBTE for the No.4 integration scripts.
+- (Optional) MPI for parallel No.5/502 runs and the No.6/603 scheduler scripts.
 
-### Option A — install as a package (recommended)
+Install into a **dedicated virtualenv**, never into the system Python:
+
 ```bash
-git clone https://github.com/<your-username>/ALAMODEkit.git
-cd ALAMODEkit/alamodekit_linux
+python3 -m venv ~/.venvs/alamodekit
+source ~/.venvs/alamodekit/bin/activate
+```
+
+### Option A — run directly without installing (recommended on a cluster)
+```bash
+pip install -r requirements.txt
+python /path/to/alamodekit_linux/alamodekit.py   # works from any directory
+```
+
+### Option B — editable install (recommended for development)
+```bash
 pip install -e .
-# launch from anywhere:
+alamodekit                                       # launch from anywhere
+```
+
+### Option C — regular install (for distributing one artifact)
+```bash
+pip install .
 alamodekit
 ```
 
-### Option B — run directly without installing
+### Then configure and verify
+1. Point `alamode.bin_dir` in `config/settings.yaml` at your compiled ALAMODE
+   build — the shipped value is a placeholder.
+2. Run `python check_deploy.py` from the toolkit root; it reports what is
+   missing and exits non-zero if the deployment is not usable.
+
+---
+
+## 🧪 Testing
+
+The toolkit ships a **pytest suite** under `tests/` that guards the four
+shared modules — the common layer every subprogram depends on:
+
+| Test file | Module under test | What it checks |
+| --- | --- | --- |
+| `test_config_loader.py` | `alamodekit_config.py` | YAML loading, the pure-Python fallback parser, the settings search order, nested lookups, UTF-8 BOM handling |
+| `test_io_helpers.py` | `alamodekit_io.py` | POSCAR / `.bands` / `.dos` parsing, high-symmetry label merging, Γ-point renaming |
+| `test_input_helpers.py` | `alamode_input.py` | ALM/ANPHON namelist generation, k-path handling, number formatting |
+| `test_plot_style.py` | `plot_style.py` | rcParams, custom colormap colour anchors, colormap caching |
+| `conftest.py` | — | test bootstrap: puts the toolkit root on `sys.path`, forces the headless Agg backend |
+
+Run the suite from the toolkit root:
+
 ```bash
-cd ALAMODEkit/alamodekit_linux
-pip install -r requirements.txt
-python alamodekit.py
+pip install pytest                # development-only dependency
+python -m pytest tests/ -v
 ```
+
+The suite is deliberately **unit-scoped and offline**: it does not drive the
+interactive menu, call `alm` / `anphon`, or compare rendered images — it
+verifies that parsing and input-generation logic stay correct as the toolkit
+evolves, so a refactor cannot silently corrupt the data behind your plots.
+The same suite runs in CI on every push. See `tests/README.md` for details.
 
 ---
 
@@ -139,6 +209,11 @@ plotting:
     velocity:  custom_yellow_green_blue
     gruneisen: custom_blue_white_red
 ```
+
+The file is searched in this order — `ALAMODEKIT_CONFIG` env var, then
+`./config/settings.yaml`, then `./settings.yaml` in the working directory, then
+the bundled copy — so a shared install can serve many users, each with their
+own settings. Leave `alamodekit.base_path` empty.
 
 ---
 
@@ -172,6 +247,16 @@ Run `alamodekit` (or `python alamodekit.py`):
 6. **No.1/102** `pre_harphband.py` → `phband.in`
 7. **No.5/502** `run_anphon.py` → `*.bands` / `*.dos`
 8. **No.2/201** plotting (config-driven)
+
+---
+
+## ✍️ Authors / 作者
+
+- **刘欣 (Xin Liu)** — 刘欣课题组，纺织新材料与先进加工全国重点实验室，武汉纺织大学 — `liux@wtu.edu.cn`
+- **刘宇佳 (Yujia Liu)** — 同上 — `416502968@qq.com`
+
+Questions and bug reports are welcome via
+[GitHub Issues](https://github.com/Lyyyyyo/alamodekit/issues).
 
 ---
 

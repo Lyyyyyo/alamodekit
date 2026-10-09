@@ -23,15 +23,25 @@ import os
 import sys
 import subprocess
 
-import alamodekit_io
-alamodekit_io.ensure_package_root()
+# --- Bootstrap: make the toolkit root importable when run as a script. ---
+# When this file is executed directly, sys.path[0] is this script's own
+# folder (No.X/<submenu>/), which does NOT contain the toolkit modules.
+# Add the package root (two levels up) to sys.path *before* importing
+# anything toolkit-level. Harmless when imported as a package module.
+_HERE = os.path.dirname(os.path.abspath(__file__))
+_ROOT = os.path.abspath(os.path.join(_HERE, os.pardir, os.pardir))
+if _ROOT not in sys.path:
+    sys.path.insert(0, _ROOT)
+
+import alamodekit_io  # noqa: E402
+alamodekit_io.ensure_package_root()  # noqa: E402
 
 from alamodekit_config import get_alamode_bin, get_config_value
 
 
 def get_env_command(default_module: str = "intel20232") -> str:
     """Interactively choose the cluster environment-loading command."""
-    print("\n===== Cluster environment setup =====")
+    print("\n" + " Cluster environment setup ".center(60, "="))
     print("1. Load default Intel environment (module load intel20232)")
     print("2. Custom environment-loading command")
     print("3. Skip environment loading")
@@ -105,12 +115,14 @@ def main():
             tail = handle.readlines()[-25:]
         print("".join(tail), end="")
 
-    # Report generated outputs (fcs / xml / pattern / cvscore).
-    base = os.path.splitext(os.path.basename(inp))[0]
-    for ext in (".fcs", ".xml", ".pattern_HARMONIC", ".pattern_ANHARMONIC", ".cvscore"):
-        for name in os.listdir("."):
-            if name.endswith(ext):
-                print(f"\nGenerated: {name}")
+    # Report generated outputs (fcs / xml / pattern / cvscore). Scan the
+    # working directory once and match each name against the suffix tuple.
+    output_suffixes = (".fcs", ".xml", ".pattern_HARMONIC",
+                       ".pattern_ANHARMONIC", ".cvscore")
+    generated = sorted(name for name in os.listdir(".")
+                       if name.endswith(output_suffixes))
+    for name in generated:
+        print(f"\nGenerated: {name}")
 
     print("\nALM run completed.")
 

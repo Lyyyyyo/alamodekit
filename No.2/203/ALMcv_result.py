@@ -27,8 +27,18 @@ import re
 import sys
 import argparse
 
-import alamodekit_io
-alamodekit_io.ensure_package_root()
+# --- Bootstrap: make the toolkit root importable when run as a script. ---
+# When this file is executed directly, sys.path[0] is this script's own
+# folder (No.X/<submenu>/), which does NOT contain the toolkit modules.
+# Add the package root (two levels up) to sys.path *before* importing
+# anything toolkit-level. Harmless when imported as a package module.
+_HERE = os.path.dirname(os.path.abspath(__file__))
+_ROOT = os.path.abspath(os.path.join(_HERE, os.pardir, os.pardir))
+if _ROOT not in sys.path:
+    sys.path.insert(0, _ROOT)
+
+import alamodekit_io  # noqa: E402
+alamodekit_io.ensure_package_root()  # noqa: E402
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -141,11 +151,10 @@ def main():
     alpha = extract_min_alpha(args.file)
     print(f"Alpha value for Minimum CVSCORE: {alpha}")
 
-    if alamodekit_io.ask_yes_no("\nPlot the CV curve?"):
-        try:
-            plot_cv_curve(args.file)
-        except Exception as exc:
-            print(f"(Plotting failed: {exc})")
+    try:
+        plot_cv_curve(args.file)
+    except Exception as exc:
+        print(f"(Plotting failed: {exc})")
 
 
 if __name__ == '__main__':

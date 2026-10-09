@@ -361,12 +361,10 @@ def main():
     # --- Run --------------------------------------------------------------
     out_path = run_analyzer(result_file, calc, options, average_gamma)
 
-    # --- Offer to plot the result -----------------------------------------
+    # --- Plot the result automatically ------------------------------------
     try:
         from plot_analyze_phonons import plot_result
-        ans = _ask("\nPlot the result now? (y/n)", 'n').lower()
-        if ans in ('y', 'yes'):
-            plot_result(out_path, calc)
+        plot_result(out_path, calc)
     except Exception as exc:  # pragma: no cover - plotting is optional
         print(f"(Plotting unavailable: {exc})")
 

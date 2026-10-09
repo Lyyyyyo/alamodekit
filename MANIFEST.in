@@ -1,9 +1,14 @@
 include README.md
-include LICENSE
+include DEPLOYMENT.md
+include INSTALL.txt
+include INSTALL_EN.txt
 include CHANGELOG.md
+include CONTRIBUTING.md
+include LICENSE
 include requirements.txt
 include pyproject.toml
 include config/settings.yaml
 # Covers No.<section>/<submenu>/<script>.py for every section, so a new No.8
 # needs no edit here.
 recursive-include No.* *.py
+recursive-include tests *.py *.md

@@ -68,11 +68,13 @@ def _read_text(name: str) -> str:
 
 setup(
     name="alamodekit",
-    version="1.5.0",
+    version="4.0",
     description="Advanced ALAMODE Toolkit - input generation, post-processing and plotting for ALAMODE.",
     long_description=_read_text("README.md"),
     long_description_content_type="text/markdown",
-    author="ALAMODEkit contributors",
+    author="刘欣、刘宇佳",
+    author_email="liux@wtu.edu.cn",
+    url="https://github.com/Lyyyyyo/alamodekit",
     license="MIT",
     python_requires=">=3.8",
     # The toolkit has no top-level package directory, so we expose the root
