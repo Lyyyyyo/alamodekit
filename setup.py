@@ -72,7 +72,7 @@ setup(
     description="Advanced ALAMODE Toolkit - input generation, post-processing and plotting for ALAMODE.",
     long_description=_read_text("README.md"),
     long_description_content_type="text/markdown",
-    author="刘欣、刘宇佳",
+    author="Xin Liu, Yujia Liu",
     author_email="liux@wtu.edu.cn",
     url="https://github.com/Lyyyyyo/alamodekit",
     license="MIT",

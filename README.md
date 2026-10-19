@@ -252,8 +252,8 @@ Run `alamodekit` (or `python alamodekit.py`):
 
 ## Authors
 
-- **刘欣 (Xin Liu)** — Liu Xin Group, State Key Laboratory of New Textile Materials and Advanced Processing, Wuhan Textile University — `liux@wtu.edu.cn`
-- **刘宇佳 (Yujia Liu)** — same affiliation — `416502968@qq.com`
+- **Xin Liu** — Liu Xin Group, State Key Laboratory of New Textile Materials and Advanced Processing, Wuhan Textile University — `liux@wtu.edu.cn`
+- **Yujia Liu** — same affiliation — `416502968@qq.com`
 
 Questions and bug reports are welcome via
 [GitHub Issues](https://github.com/Lyyyyyo/alamodekit/issues).

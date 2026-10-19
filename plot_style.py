@@ -64,9 +64,13 @@ def _cmap_blue_white_red(zero_fraction: float = 0.5) -> LinearSegmentedColormap:
     used so that 0 always maps to white even when the data range is skewed.
     """
     zero_fraction = min(max(float(zero_fraction), 0.0), 1.0)
-    colors = [(0.0, (0.0, 0.0, 0.5)),     # dark blue at the minimum
-              (zero_fraction, (1.0, 1.0, 1.0)),  # white at zero
-              (1.0, (0.8, 0.0, 0.0))]     # dark red at the maximum
+    colors = [(0.0, (0.0, 0.0, 0.5))]       # dark blue at the minimum
+    # Add the white anchor only when it is strictly interior. When clamping
+    # moves it to an end, it coincides with that end color (and matplotlib
+    # rejects duplicate positions), so omit it and keep the two end anchors.
+    if 0.0 < zero_fraction < 1.0:
+        colors.append((zero_fraction, (1.0, 1.0, 1.0)))  # white at zero
+    colors.append((1.0, (0.8, 0.0, 0.0)))     # dark red at the maximum
     cmap = LinearSegmentedColormap.from_list('gruneisen', colors, N=2048)
     return cmap
 

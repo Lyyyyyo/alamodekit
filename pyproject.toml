@@ -10,8 +10,8 @@ readme = "README.md"
 requires-python = ">=3.8"
 license = { text = "MIT" }
 authors = [
-    { name = "刘欣", email = "liux@wtu.edu.cn" },
-    { name = "刘宇佳", email = "416502968@qq.com" },
+    { name = "Xin Liu", email = "liux@wtu.edu.cn" },
+    { name = "Yujia Liu", email = "416502968@qq.com" },
 ]
 keywords = ["alamode", "phonon", "thermal-conductivity", "shengbte", "scph", "anharmonic"]
 classifiers = [

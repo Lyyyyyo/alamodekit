@@ -6,6 +6,24 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+- **All source, metadata and legal files are English-only (apart from the
+  Chinese installation guide).** The Chinese characters that remained in the
+  package metadata and copyright were romanized to the authors' standard
+  names: `setup.py`, `pyproject.toml`, `LICENSE`, and the README/CHANGELOG now
+  use "Xin Liu" and "Yujia Liu". `INSTALL.txt` intentionally stays a Chinese
+  document (its English counterpart is `INSTALL_EN.txt`). Together with the
+  prior cleanup, code comments and every runtime/terminal output contain no
+  Chinese characters.
+
+### Fixed
+- **Gruneisen blue-white-red colormap at clamped limits.** When the white
+  anchor position was out of range and clamped to exactly 0 or 1, it
+  coincided with an end color; the duplicated stop position made
+  `LinearSegmentedColormap.from_list` raise under strict matplotlib versions.
+  The white anchor is now omitted when it clamps to an end so the two end
+  colors are kept.
+
 ## [4.0] — 2026-10-08
 
 ### Fixed
@@ -58,9 +76,9 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   every genuine parameter, file-number, and menu input: it selects serial vs.
   `mpirun -np N` execution and is a real runtime option, not a confirmation.
 - **Author attribution and repository metadata.** The MIT `LICENSE` copyright
-  line and the package metadata now name the authors (刘欣 / Xin Liu and
-  刘宇佳 / Yujia Liu, Liu Group, State Key Laboratory of New Textile Materials
-  and Advanced Processing Technologies, Wuhan Textile University), and
+  line and the package metadata now name the authors (Xin Liu and Yujia Liu,
+  Liu Group, State Key Laboratory of New Textile Materials and Advanced
+  Processing Technologies, Wuhan Textile University), and
   `setup.py`, `pyproject.toml` and the README point at the GitHub repository.
 
 ## [1.5.1] — 2026-09-23
