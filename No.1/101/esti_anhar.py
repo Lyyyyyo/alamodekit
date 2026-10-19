@@ -13,8 +13,8 @@ Interactive parameters
 ----------------------
 NORDER  : highest order (1 harmonic, 2 cubic, 3 quartic, ...)
 NBODY   : body orders to consider
-CUTOFF3 : 3rd-order cutoff radius (Angstrom)
-CUTOFF4 : 4th-order cutoff radius (Angstrom)
+CUTOFF3 : 3rd-order cutoff radius (Bohr; asked only when NORDER >= 2)
+CUTOFF4 : 4th-order cutoff radius (Bohr; asked only when NORDER >= 3)
 L1_ALPHA: LASSO regularization strength (scientific notation accepted)
 
 Outputs
@@ -59,12 +59,16 @@ def main(poscar: str = "SPOSCAR", output: str = "alm3.in",
                         default=3, cast=int, validator=lambda v:
                         v >= 1 or print("  -> NORDER must be >= 1."))
     nbody = ask_int_list("Enter NBODY (e.g. 2 3 4)", default=[2, 3, 4])
-    cutoff3 = ask_number("Enter 3rd-order cutoff (Angstrom)", default=15.0,
-                         cast=float, validator=lambda v:
-                         v > 0 or print("  -> must be > 0."))
-    cutoff4 = ask_number("Enter 4th-order cutoff (Angstrom)", default=9.0,
-                         cast=float, validator=lambda v:
-                         v > 0 or print("  -> must be > 0."))
+    cutoff3 = None
+    cutoff4 = None
+    if norder >= 2:
+        cutoff3 = ask_number("Enter 3rd-order cutoff (Bohr)", default=15.0,
+                             cast=float, validator=lambda v:
+                             v > 0 or print("  -> must be > 0."))
+    if norder >= 3:
+        cutoff4 = ask_number("Enter 4th-order cutoff (Bohr)", default=9.0,
+                             cast=float, validator=lambda v:
+                             v > 0 or print("  -> must be > 0."))
     l1_alpha = ask_number("Enter L1_ALPHA (LASSO regularization)",
                           default=1.0e-5, cast=float, validator=lambda v:
                           v >= 0 or print("  -> L1_ALPHA must be >= 0."))
@@ -73,14 +77,23 @@ def main(poscar: str = "SPOSCAR", output: str = "alm3.in",
     print("Parameter confirmation:")
     print(f"  NORDER  = {norder}")
     print(f"  NBODY   = {' '.join(map(str, nbody))}")
-    print(f"  cutoff3 = {cutoff3} A")
-    print(f"  cutoff4 = {cutoff4} A")
+    if norder >= 2:
+        print(f"  cutoff3 = {cutoff3:.1f} Bohr")
+    if norder >= 3:
+        print(f"  cutoff4 = {cutoff4:.1f} Bohr")
     print(f"  L1_ALPHA= {l1_alpha}")
     print("=" * 60 + "\n")
 
     info = parse_poscar(poscar)
     nat = sum(info['atom_counts'])
     nkd = len(info['elements'])
+
+    # One cutoff column per order; the first column is for the harmonic FC2.
+    cutoff_cols = ["None"]
+    if norder >= 2:
+        cutoff_cols.append(f"{cutoff3:.1f}")
+    if norder >= 3:
+        cutoff_cols.append(f"{cutoff4:.1f}")
 
     blocks = [
         ('general', [
@@ -94,15 +107,14 @@ def main(poscar: str = "SPOSCAR", output: str = "alm3.in",
             f"\tNBODY = {' '.join(map(str, nbody))}",
         ]),
         ('cell', cell_block_lines(info['cell'])),
-        ('cutoff', [f"\t*-* None {cutoff3:.1f} {cutoff4:.1f}"]),
+        ('cutoff', ["\t*-* " + " ".join(cutoff_cols)]),
         ('position', position_block_lines(info['positions'])),
         # CV is removed; L1_ALPHA drives the optimization instead.
         ('optimize', [
             "\tLMODEL = adaptive-lasso",
             "\tDFSET = DFSET_AIMD_random",
-            "\tFC2XML = IFC2.xml",
+            f"\tFC2XML = {prefix}2.xml",
             f"\tL1_ALPHA = {l1_alpha}",
-            "\tL1_RATIO = 1.0  # LASSO",
             "\tCV_MINALPHA = 1.0e-8",
             "\tCV_MAXALPHA = 0.01",
             "\tCV_NALPHA = 100",
@@ -111,8 +123,11 @@ def main(poscar: str = "SPOSCAR", output: str = "alm3.in",
         ]),
     ]
     write_namelist(output, blocks)
-    print(f"The input file '{output}' has been generated. "
-          "Please remember to adjust the PREFIX value.")
+    print(f"The input file '{output}' has been generated.")
+    print("Notes:")
+    print(f"  - Make sure the harmonic 2nd-order FC file '{prefix}2.xml' exists")
+    print(f"    (produced by an earlier harmonic fit and read through FC2XML).")
+    print("  - Adjust PREFIX / DFSET if your files use different names.")
 
 
 if __name__ == '__main__':

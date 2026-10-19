@@ -17,6 +17,20 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   Chinese characters.
 
 ### Fixed
+- **ALM CV and anharmonic-fit generators (101-03 / 101-04).**
+  - Cutoff radii are asked only when the selected order needs them: the
+    3rd-order cutoff when NORDER >= 2 and the 4th-order cutoff when
+    NORDER >= 3, and the `&cutoff` block emits one column per order
+    (e.g. "None 15.0" for NORDER=2, "None 15.0 9.0" for NORDER=3).
+  - Cutoff radii are labeled in Bohr (ALAMODE's internal unit), not
+    Angstrom.
+  - `FC2XML` now follows PREFIX as `<PREFIX>2.xml` (e.g. Cu2.xml)
+    instead of a hard-coded IFC2.xml, and the terminal notes that the
+    harmonic 2nd-order FC file must already exist.
+  - Removed the spurious `L1_RATIO = 1.0` (it applies only to the
+    elastic-net model, not adaptive-lasso).
+  - In the CV variant the inline comment uses the requested fold count
+    (e.g. "# 2-fold cross-validation") rather than a fixed value.
 - **Gruneisen blue-white-red colormap at clamped limits.** When the white
   anchor position was out of range and clamped to exactly 0 or 1, it
   coincided with an end color; the duplicated stop position made
